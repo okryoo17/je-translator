@@ -11,7 +11,7 @@
 <style>
   :root {
     color-scheme: dark;
-    --fs-main: 30px;
+    --fs-main: 32px;
     --fs-history: 14px;
   }
   * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; -webkit-user-select: none; user-select: none; }
@@ -72,9 +72,9 @@
   .main-text.placeholder { opacity: 0.3; font-weight: 400; font-size: 17px; }
 
   .interim {
-    flex: 0 0 auto; min-height: 24px;
+    flex: 0 0 auto; min-height: 22px;
     font-size: 13px; opacity: 0.55; text-align: center;
-    margin-top: 6px;
+    margin-top: 4px;
   }
   .interim.active::after {
     content: ''; display: inline-block;
@@ -83,10 +83,7 @@
     animation: blink 1s infinite;
     vertical-align: middle;
   }
-  @keyframes blink {
-    0%, 100% { opacity: 0.3; }
-    50% { opacity: 1; }
-  }
+  @keyframes blink { 0%, 100% { opacity: 0.3; } 50% { opacity: 1; } }
 
   .center-bar {
     position: absolute;
@@ -94,7 +91,7 @@
     transform: translateY(-50%);
     height: 56px;
     display: flex; align-items: center; justify-content: center;
-    gap: 12px;
+    gap: 14px;
     pointer-events: none;
     z-index: 10;
   }
@@ -119,45 +116,88 @@
     0%, 100% { box-shadow: 0 0 0 0 rgba(220,38,38,0.6); }
     50% { box-shadow: 0 0 0 14px rgba(220,38,38,0); }
   }
-  #settingsBtn, #clearBtn {
-    width: 38px; height: 38px; border-radius: 50%;
+  .icon-btn {
+    width: 40px; height: 40px; border-radius: 50%;
     border: 1px solid rgba(255,255,255,0.25);
     background: rgba(0,0,0,0.5);
-    color: #fff; font-size: 16px;
+    color: #fff; font-size: 17px;
     cursor: pointer; font-family: inherit;
   }
-  #settingsBtn:active, #clearBtn:active { transform: scale(0.92); }
+  .icon-btn:active { transform: scale(0.92); }
+
+  .modal {
+    position: fixed; inset: 0;
+    background: #0a0a0a; z-index: 100;
+    display: none; flex-direction: column;
+    padding: env(safe-area-inset-top) 0 env(safe-area-inset-bottom);
+  }
+  .modal.show { display: flex; }
+  .modal-head {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 14px 18px; border-bottom: 1px solid #27272a;
+  }
+  .modal-head h2 { font-size: 16px; margin: 0; font-weight: 600; }
+  .modal-actions { display: flex; gap: 8px; }
+  .modal-actions button {
+    border: 1px solid #3f3f46; background: #18181b; color: #fff;
+    padding: 7px 12px; border-radius: 8px;
+    font-family: inherit; font-size: 12px; cursor: pointer;
+  }
+  .modal-actions button.danger { border-color: #7f1d1d; color: #fca5a5; }
+  .modal-body {
+    flex: 1; overflow-y: auto; padding: 14px 18px;
+    -webkit-overflow-scrolling: touch;
+  }
+  .log-entry {
+    padding: 10px 0;
+    border-bottom: 1px solid #1f1f23;
+  }
+  .log-entry .ts {
+    font-size: 10px; color: #71717a; letter-spacing: 0.08em;
+    margin-bottom: 4px;
+  }
+  .log-entry .src {
+    font-size: 13px; color: #a1a1aa; line-height: 1.5;
+    margin-bottom: 3px;
+  }
+  .log-entry .dst {
+    font-size: 15px; color: #fff; line-height: 1.5;
+  }
+  .log-entry .lang-tag {
+    display: inline-block; font-size: 9px; padding: 1px 5px;
+    border-radius: 3px; margin-right: 6px;
+    background: #27272a; color: #d4d4d8;
+  }
+  .empty-log {
+    text-align: center; padding: 60px 20px;
+    color: #52525b; font-size: 13px;
+  }
 
   .panel {
     position: fixed; left: 50%; top: 50%;
     transform: translate(-50%, -50%);
     background: #18181b; border: 1px solid #3f3f46;
     border-radius: 16px; padding: 20px 22px;
-    width: min(320px, 88vw);
+    width: min(300px, 88vw);
     z-index: 100; display: none;
-    box-shadow: 0 20px 60px rgba(0,0,0,0.8);
   }
   .panel.show { display: block; }
   .panel h3 { margin: 0 0 14px; font-size: 15px; }
   .panel label { display: block; font-size: 12px; margin: 12px 0 4px; opacity: 0.7; }
-  .panel input[type=range] { width: 100%; accent-color: #dc2626; }
   .panel .val { float: right; font-size: 11px; opacity: 0.6; }
-  .panel .row { display: flex; gap: 8px; margin-top: 16px; }
+  .panel input[type=range] { width: 100%; accent-color: #dc2626; }
+  .panel .row { display: flex; gap: 8px; margin-top: 18px; }
   .panel button {
     flex: 1; padding: 10px;
-    border: 1px solid #3f3f46;
-    background: #27272a; color: #fff;
-    border-radius: 8px; font-family: inherit; font-size: 13px;
-    cursor: pointer;
+    border: 1px solid #dc2626; background: #dc2626;
+    color: #fff; border-radius: 8px;
+    font-family: inherit; font-size: 13px; cursor: pointer;
   }
-  .panel button:active { transform: scale(0.97); }
-  .panel button.primary { background: #dc2626; border-color: #dc2626; }
   .backdrop {
     position: fixed; inset: 0; background: rgba(0,0,0,0.5);
     z-index: 99; display: none;
   }
   .backdrop.show { display: block; }
-
   .err {
     position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%);
     background: rgba(0,0,0,0.92); color: #fca5a5;
@@ -190,56 +230,65 @@
 </div>
 
 <div class="center-bar">
-  <button id="clearBtn" aria-label="クリア">✕</button>
+  <button id="logBtn" class="icon-btn" aria-label="議事録">📋</button>
   <button id="startBtn">START</button>
-  <button id="settingsBtn" aria-label="設定">⚙</button>
+  <button id="settingsBtn" class="icon-btn" aria-label="設定">⚙</button>
+</div>
+
+<div class="modal" id="logModal">
+  <div class="modal-head">
+    <h2>議事録</h2>
+    <div class="modal-actions">
+      <button id="logCopy">コピー</button>
+      <button id="logClear" class="danger">削除</button>
+      <button id="logClose">閉じる</button>
+    </div>
+  </div>
+  <div class="modal-body" id="logBody"></div>
 </div>
 
 <div class="backdrop" id="backdrop"></div>
 <div class="panel" id="panel">
   <h3>設定</h3>
-  <label>文字サイズ <span class="val" id="vFs">30px</span></label>
-  <input type="range" id="rFs" min="20" max="56" step="2" value="30">
-  <label>読み上げ速度 <span class="val" id="vRate">1.0x</span></label>
-  <input type="range" id="rRate" min="0.6" max="1.6" step="0.1" value="1.0">
+  <label>文字サイズ <span class="val" id="vFs">32px</span></label>
+  <input type="range" id="rFs" min="20" max="60" step="2" value="32">
   <label>履歴文字サイズ <span class="val" id="vHis">14px</span></label>
   <input type="range" id="rHis" min="10" max="20" step="1" value="14">
-  <div class="row">
-    <button id="panelClose" class="primary">閉じる</button>
-  </div>
+  <div class="row"><button id="panelClose">閉じる</button></div>
 </div>
 
 <script>
 const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
 const $ = (id) => document.getElementById(id);
 const startBtn = $('startBtn');
-const clearBtn = $('clearBtn');
+const logBtn = $('logBtn');
 const settingsBtn = $('settingsBtn');
+const logModal = $('logModal');
+const logBody = $('logBody');
+const logCopy = $('logCopy');
+const logClear = $('logClear');
+const logClose = $('logClose');
 const panel = $('panel');
 const backdrop = $('backdrop');
 const panelClose = $('panelClose');
 const rFs = $('rFs'), vFs = $('vFs');
-const rRate = $('rRate'), vRate = $('vRate');
 const rHis = $('rHis'), vHis = $('vHis');
 const histEn = $('histEn'), histJa = $('histJa');
 const dstEn = $('dstEn'), dstJa = $('dstJa');
 const interimEn = $('interimEn'), interimJa = $('interimJa');
 
+// ---- 設定 ----
 const cfg = JSON.parse(localStorage.getItem('cfg') || '{}');
-const fontSize = cfg.fontSize || 30;
+const fontSize = cfg.fontSize || 32;
 const histSize = cfg.histSize || 14;
-const rate = cfg.rate || 1.0;
 document.documentElement.style.setProperty('--fs-main', fontSize + 'px');
 document.documentElement.style.setProperty('--fs-history', histSize + 'px');
 rFs.value = fontSize; vFs.textContent = fontSize + 'px';
-rRate.value = rate; vRate.textContent = rate.toFixed(1) + 'x';
 rHis.value = histSize; vHis.textContent = histSize + 'px';
 
 function saveCfg() {
   localStorage.setItem('cfg', JSON.stringify({
-    fontSize: parseInt(rFs.value),
-    histSize: parseInt(rHis.value),
-    rate: parseFloat(rRate.value),
+    fontSize: parseInt(rFs.value), histSize: parseInt(rHis.value),
   }));
 }
 rFs.addEventListener('input', () => {
@@ -250,19 +299,76 @@ rHis.addEventListener('input', () => {
   document.documentElement.style.setProperty('--fs-history', rHis.value + 'px');
   vHis.textContent = rHis.value + 'px'; saveCfg();
 });
-rRate.addEventListener('input', () => {
-  vRate.textContent = parseFloat(rRate.value).toFixed(1) + 'x'; saveCfg();
-});
 
 settingsBtn.addEventListener('click', () => { panel.classList.add('show'); backdrop.classList.add('show'); });
 [panelClose, backdrop].forEach(el => el.addEventListener('click', () => {
   panel.classList.remove('show'); backdrop.classList.remove('show');
 }));
 
+// ---- 議事録 ----
+let logEntries = JSON.parse(localStorage.getItem('logEntries') || '[]');
+
+function saveLog() {
+  if (logEntries.length > 500) logEntries = logEntries.slice(-500);
+  localStorage.setItem('logEntries', JSON.stringify(logEntries));
+}
+
+function fmtTs(ts) {
+  const d = new Date(ts);
+  const pad = (n) => String(n).padStart(2, '0');
+  return `${d.getMonth()+1}/${d.getDate()} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
+}
+
+function renderLog() {
+  if (logEntries.length === 0) {
+    logBody.innerHTML = '<div class="empty-log">まだ記録がありません</div>';
+    return;
+  }
+  logBody.innerHTML = '';
+  for (const e of logEntries) {
+    const div = document.createElement('div');
+    div.className = 'log-entry';
+    const tag = e.from === 'ja' ? 'JA→EN' : 'EN→JA';
+    div.innerHTML = `<div class="ts"><span class="lang-tag">${tag}</span>${fmtTs(e.ts)}</div>
+      <div class="src">${escapeHtml(e.src)}</div>
+      <div class="dst">${escapeHtml(e.dst)}</div>`;
+    logBody.appendChild(div);
+  }
+  logBody.scrollTop = logBody.scrollHeight;
+}
+
+function escapeHtml(s) {
+  return s.replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+function addLog(from, src, dst) {
+  logEntries.push({ ts: Date.now(), from, src, dst });
+  saveLog();
+}
+
+logBtn.addEventListener('click', () => { renderLog(); logModal.classList.add('show'); });
+logClose.addEventListener('click', () => logModal.classList.remove('show'));
+logClear.addEventListener('click', () => {
+  if (!confirm('議事録を全削除しますか？')) return;
+  logEntries = []; saveLog(); renderLog();
+});
+logCopy.addEventListener('click', async () => {
+  const text = logEntries.map(e =>
+    `[${fmtTs(e.ts)}] ${e.from === 'ja' ? 'JA→EN' : 'EN→JA'}\n  ${e.src}\n  ${e.dst}`
+  ).join('\n\n');
+  try {
+    await navigator.clipboard.writeText(text);
+    logCopy.textContent = 'コピー済';
+    setTimeout(() => logCopy.textContent = 'コピー', 1500);
+  } catch (e) {
+    showError('コピー失敗: ' + e.message);
+  }
+});
+
+// ---- 音声認識・翻訳 ----
 let running = false;
 let recognition = null;
 let currentLang = 'ja-JP';
-let speaking = false;
 
 if (!SR) {
   showError('このブラウザは音声認識に未対応です');
@@ -271,11 +377,7 @@ if (!SR) {
 
 function showError(msg) {
   let el = document.querySelector('.err');
-  if (!el) {
-    el = document.createElement('div');
-    el.className = 'err';
-    document.body.appendChild(el);
-  }
+  if (!el) { el = document.createElement('div'); el.className = 'err'; document.body.appendChild(el); }
   el.textContent = msg;
   clearTimeout(showError._t);
   showError._t = setTimeout(() => el.remove(), 4000);
@@ -285,36 +387,21 @@ function hasJapanese(text) {
   return /[぀-ゟ゠-ヿ一-鿿]/.test(text);
 }
 
+// Google翻訳の非公式エンドポイント（高速・無料）
 async function translate(text, from, to) {
-  const url = `https://api.mymemory.translated.net/get?q=${encodeURIComponent(text)}&langpair=${from}|${to}`;
-  const res = await fetch(url);
-  if (!res.ok) throw new Error('翻訳API ' + res.status);
-  const data = await res.json();
-  return data.responseData.translatedText;
-}
-
-function pickVoice(lang) {
-  const voices = window.speechSynthesis.getVoices();
-  const target = lang.startsWith('ja') ? 'ja' : 'en';
-  return voices.find(v => v.lang.toLowerCase().startsWith(target) && /female|kyoko|samantha|google/i.test(v.name))
-      || voices.find(v => v.lang.toLowerCase().startsWith(target))
-      || null;
-}
-
-function speak(text, lang) {
-  return new Promise((resolve) => {
-    if (!window.speechSynthesis) { resolve(); return; }
-    const u = new SpeechSynthesisUtterance(text);
-    u.lang = lang;
-    u.rate = parseFloat(rRate.value);
-    const v = pickVoice(lang);
-    if (v) u.voice = v;
-    u.onend = resolve;
-    u.onerror = resolve;
-    speaking = true;
-    window.speechSynthesis.cancel();
-    window.speechSynthesis.speak(u);
-  }).then(() => { speaking = false; });
+  const url = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=${from}&tl=${to}&dt=t&q=${encodeURIComponent(text)}`;
+  try {
+    const res = await fetch(url);
+    if (!res.ok) throw new Error('google ' + res.status);
+    const data = await res.json();
+    return data[0].map(seg => seg[0]).join('');
+  } catch (e) {
+    // フォールバックでMyMemory
+    const res = await fetch(`https://api.mymemory.translated.net/get?q=${encodeURIComponent(text)}&langpair=${from}|${to}`);
+    if (!res.ok) throw new Error('mymemory ' + res.status);
+    const d = await res.json();
+    return d.responseData.translatedText;
+  }
 }
 
 function pushHistory(elContainer, text) {
@@ -330,31 +417,31 @@ async function handleResult(text) {
   if (!text) return;
   const isJa = hasJapanese(text);
   if (isJa) {
-    if (dstJa.textContent && !dstJa.classList.contains('placeholder')) pushHistory(histJa, dstJa.textContent);
+    if (!dstJa.classList.contains('placeholder') && dstJa.textContent) pushHistory(histJa, dstJa.textContent);
     dstJa.classList.remove('placeholder');
     dstJa.textContent = text;
+    if (!dstEn.classList.contains('placeholder') && dstEn.textContent && dstEn.textContent !== '...' && dstEn.textContent !== 'listening...') pushHistory(histEn, dstEn.textContent);
     dstEn.classList.remove('placeholder');
-    if (dstEn.textContent && dstEn.textContent !== '...' && dstEn.textContent !== 'listening...') pushHistory(histEn, dstEn.textContent);
     dstEn.textContent = '...';
     try {
       const t = await translate(text, 'ja', 'en');
       dstEn.textContent = t;
-      await speak(t, 'en-US');
+      addLog('ja', text, t);
     } catch (e) {
       dstEn.textContent = '(translation failed)';
       showError(e.message);
     }
   } else {
-    if (dstEn.textContent && !dstEn.classList.contains('placeholder')) pushHistory(histEn, dstEn.textContent);
+    if (!dstEn.classList.contains('placeholder') && dstEn.textContent) pushHistory(histEn, dstEn.textContent);
     dstEn.classList.remove('placeholder');
     dstEn.textContent = text;
+    if (!dstJa.classList.contains('placeholder') && dstJa.textContent && dstJa.textContent !== '...' && dstJa.textContent !== '中央のボタンで開始') pushHistory(histJa, dstJa.textContent);
     dstJa.classList.remove('placeholder');
-    if (dstJa.textContent && dstJa.textContent !== '...' && dstJa.textContent !== '中央のボタンで開始') pushHistory(histJa, dstJa.textContent);
     dstJa.textContent = '...';
     try {
       const t = await translate(text, 'en', 'ja');
       dstJa.textContent = t;
-      await speak(t, 'ja-JP');
+      addLog('en', text, t);
     } catch (e) {
       dstJa.textContent = '(翻訳失敗)';
       showError(e.message);
@@ -364,22 +451,16 @@ async function handleResult(text) {
 
 function setInterim(text, lang) {
   if (lang === 'ja-JP') {
-    interimJa.textContent = text;
-    interimJa.classList.toggle('active', !!text);
-    interimEn.textContent = '';
-    interimEn.classList.remove('active');
+    interimJa.textContent = text; interimJa.classList.toggle('active', !!text);
+    interimEn.textContent = ''; interimEn.classList.remove('active');
   } else {
-    interimEn.textContent = text;
-    interimEn.classList.toggle('active', !!text);
-    interimJa.textContent = '';
-    interimJa.classList.remove('active');
+    interimEn.textContent = text; interimEn.classList.toggle('active', !!text);
+    interimJa.textContent = ''; interimJa.classList.remove('active');
   }
 }
 
 function startCycle() {
   if (!running) return;
-  if (speaking) { setTimeout(startCycle, 250); return; }
-
   recognition = new SR();
   recognition.lang = currentLang;
   recognition.interimResults = true;
@@ -408,11 +489,14 @@ function startCycle() {
     }
   };
 
-  recognition.onend = async () => {
+  recognition.onend = () => {
     setInterim('', currentLang);
-    if (finalText.trim()) await handleResult(finalText);
+    if (finalText.trim()) {
+      // 翻訳は非同期で投げる（待たずに次の認識へ）
+      handleResult(finalText);
+    }
     currentLang = currentLang === 'ja-JP' ? 'en-US' : 'ja-JP';
-    if (running) setTimeout(startCycle, 80);
+    if (running) setTimeout(startCycle, 30);
   };
 
   try {
@@ -433,38 +517,22 @@ function startAll() {
   dstJa.classList.add('placeholder');
   dstEn.textContent = 'listening...';
   dstJa.textContent = '聞き取り中...';
-  if (window.speechSynthesis) window.speechSynthesis.getVoices();
   startCycle();
 }
 
 function stopAll() {
   running = false;
-  if (recognition) {
-    try { recognition.stop(); } catch(e) {}
-    recognition = null;
-  }
-  if (window.speechSynthesis) window.speechSynthesis.cancel();
-  setInterim('', 'ja-JP');
-  setInterim('', 'en-US');
+  if (recognition) { try { recognition.stop(); } catch(e) {} recognition = null; }
+  setInterim('', 'ja-JP'); setInterim('', 'en-US');
   startBtn.classList.remove('running');
   startBtn.textContent = 'START';
 }
 
 startBtn.addEventListener('click', () => { if (running) stopAll(); else startAll(); });
-clearBtn.addEventListener('click', () => {
-  histEn.innerHTML = ''; histJa.innerHTML = '';
-  dstEn.classList.add('placeholder'); dstJa.classList.add('placeholder');
-  dstEn.textContent = running ? 'listening...' : 'tap center to start';
-  dstJa.textContent = running ? '聞き取り中...' : '中央のボタンで開始';
-});
 
 document.addEventListener('visibilitychange', () => {
   if (document.hidden && running) stopAll();
 });
-
-if (window.speechSynthesis) {
-  window.speechSynthesis.onvoiceschanged = () => window.speechSynthesis.getVoices();
-}
 </script>
 </body>
 </html>
