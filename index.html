@@ -3,8 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-capable" content="no">
 <meta name="apple-mobile-web-app-title" content="通訳">
 <title>JP/EN 通訳</title>
 <link rel="apple-touch-icon" href="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='22' fill='%23111'/><text x='50' y='62' font-size='52' text-anchor='middle' fill='white'>JE</text></svg>">
@@ -557,45 +556,20 @@ function appendConfMessage(from, src, dst, animate = true) {
 }
 initConfLog();
 
-// ---- マイク音量メーター ----
-let micStream = null, micCtx = null, micAnalyser = null, micRaf = null;
-async function startMicMeter() {
-  if (micStream) return;
-  try {
-    micStream = await navigator.mediaDevices.getUserMedia({
-      audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: true },
-    });
-    micCtx = new (window.AudioContext || window.webkitAudioContext)();
-    const src = micCtx.createMediaStreamSource(micStream);
-    micAnalyser = micCtx.createAnalyser();
-    micAnalyser.fftSize = 512;
-    src.connect(micAnalyser);
-    const data = new Uint8Array(micAnalyser.frequencyBinCount);
-    const loop = () => {
-      if (!micAnalyser) return;
-      micAnalyser.getByteTimeDomainData(data);
-      let max = 0;
-      for (const v of data) { const d = Math.abs(v - 128); if (d > max) max = d; }
-      const level = Math.min(1, max / 60);
-      const h = 4 + level * 80;
-      micMeter.style.height = h + 'px';
-      micMeter.style.background = level > 0.3 ? '#22c55e' : level > 0.1 ? '#eab308' : '#dc2626';
-      micMeter.classList.add('live');
-      micRaf = requestAnimationFrame(loop);
-    };
-    loop();
-  } catch (e) {
-    console.warn('mic meter failed', e);
+// ---- マイクインジケータ（SpeechRecognitionのイベントで連動・getUserMedia不使用） ----
+function setMicState(state) {
+  // state: 'idle' | 'listening' | 'speaking'
+  micMeter.classList.toggle('live', state !== 'idle');
+  if (state === 'speaking') {
+    micMeter.style.background = '#22c55e';
+    micMeter.style.height = '64px';
+  } else if (state === 'listening') {
+    micMeter.style.background = '#eab308';
+    micMeter.style.height = '20px';
+  } else {
+    micMeter.style.background = '#dc2626';
+    micMeter.style.height = '4px';
   }
-}
-function stopMicMeter() {
-  if (micRaf) cancelAnimationFrame(micRaf);
-  micRaf = null;
-  if (micAnalyser) micAnalyser = null;
-  if (micCtx) { try { micCtx.close(); } catch(e) {} micCtx = null; }
-  if (micStream) { micStream.getTracks().forEach(t => t.stop()); micStream = null; }
-  micMeter.classList.remove('live');
-  micMeter.style.height = '4px';
 }
 
 // ---- 音声認識・翻訳 ----
@@ -692,6 +666,9 @@ function startCycle() {
 
   let finalText = '';
 
+  recognition.onstart = () => setMicState('listening');
+  recognition.onspeechstart = () => setMicState('speaking');
+  recognition.onspeechend = () => setMicState('listening');
   recognition.onresult = (e) => {
     let interim = '';
     for (let i = e.resultIndex; i < e.results.length; i++) {
@@ -730,7 +707,6 @@ function startAll() {
   dstJa.classList.add('placeholder');
   dstEn.textContent = 'listening...';
   dstJa.textContent = '聞き取り中...';
-  startMicMeter();
   startCycle();
 }
 function stopAll() {
@@ -740,7 +716,7 @@ function stopAll() {
   startBtn.classList.remove('running');
   startBtn.textContent = 'START';
   confHead.classList.remove('live');
-  stopMicMeter();
+  setMicState('idle');
 }
 
 startBtn.addEventListener('click', () => { if (running) stopAll(); else startAll(); });
