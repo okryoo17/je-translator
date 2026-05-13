@@ -744,21 +744,15 @@ function startCycle() {
     const text = finalText.trim();
     if (text) {
       const spoken = detectSpoken(text);
-      if (spoken === 'ja') {
-        if (!shouldSkip(text, 'ja')) processSpoken(text, 'ja');
-        currentLang = 'ja-JP'; // 維持
-      } else if (spoken === 'en') {
-        if (!shouldSkip(text, 'en')) processSpoken(text, 'en');
-        currentLang = 'en-US'; // 維持
-      } else if (spoken === 'maybe-en' && currentLang === 'ja-JP') {
-        // ja-JPモードで英語誤認識（カタカナ化）→ 結果を捨てて en-US へ
-        currentLang = 'en-US';
-      } else {
-        // 不明 → 反対言語で再試行
-        currentLang = currentLang === 'ja-JP' ? 'en-US' : 'ja-JP';
+      if (spoken === 'ja' && !shouldSkip(text, 'ja')) {
+        processSpoken(text, 'ja');
+      } else if (spoken === 'en' && !shouldSkip(text, 'en')) {
+        processSpoken(text, 'en');
       }
+      // maybe-en (カタカナ誤認識) / unknown は捨てる
     }
-    // text空（no-speech）の場合は currentLang そのままで再起動
+    // 毎サイクル強制交互切替（応答頻度を維持）
+    currentLang = currentLang === 'ja-JP' ? 'en-US' : 'ja-JP';
     if (running) setTimeout(startCycle, 30);
   };
 
