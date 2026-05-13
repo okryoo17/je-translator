@@ -9,7 +9,11 @@
 <title>対面通訳 JP/EN</title>
 <link rel="apple-touch-icon" href="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='22' fill='%23111'/><text x='50' y='62' font-size='52' text-anchor='middle' fill='white'>JE</text></svg>">
 <style>
-  :root { color-scheme: dark; }
+  :root {
+    color-scheme: dark;
+    --fs-main: 30px;
+    --fs-history: 14px;
+  }
   * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; -webkit-user-select: none; user-select: none; }
   html, body {
     margin: 0; padding: 0; height: 100%; width: 100%;
@@ -22,103 +26,238 @@
   .half {
     flex: 1; position: relative;
     display: flex; flex-direction: column;
-    padding: env(safe-area-inset-top) 16px 16px;
     overflow: hidden;
+    padding: 14px 18px;
   }
   .half.top {
-    background: #1e3a8a;
+    background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%);
     transform: rotate(180deg);
-    transform-origin: center center;
-    padding: 16px 16px env(safe-area-inset-bottom);
+    padding-top: max(14px, env(safe-area-inset-top));
+    padding-bottom: 56px;
   }
   .half.bottom {
-    background: #991b1b;
-    padding: 16px 16px env(safe-area-inset-bottom);
+    background: linear-gradient(0deg, #1c1917 0%, #0c0a09 100%);
+    padding-top: 56px;
+    padding-bottom: max(14px, env(safe-area-inset-bottom));
   }
 
-  .label {
-    font-size: 11px; letter-spacing: 0.18em;
-    opacity: 0.65; text-transform: uppercase;
+  .header-row {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 6px;
+  }
+  .lang-badge {
+    font-size: 10px; letter-spacing: 0.18em; opacity: 0.55;
+    text-transform: uppercase; font-weight: 600;
+  }
+  .role {
+    font-size: 10px; opacity: 0.45; letter-spacing: 0.1em;
+  }
+
+  .history {
+    flex: 0 0 auto; max-height: 28%; overflow-y: auto;
+    font-size: var(--fs-history); line-height: 1.5;
+    opacity: 0.5;
     margin-bottom: 8px;
+    -webkit-overflow-scrolling: touch;
   }
-  .heard {
-    font-size: 14px; opacity: 0.55; line-height: 1.4;
-    margin-bottom: 12px; max-height: 4.2em; overflow: hidden;
-  }
-  .translated {
-    flex: 1; display: flex; align-items: center; justify-content: center;
-    font-size: 32px; font-weight: 600; line-height: 1.4;
-    text-align: center; word-break: break-word;
-    padding: 8px 4px;
-  }
-  .translated.placeholder { opacity: 0.35; font-weight: 400; font-size: 18px; }
+  .history div { margin: 4px 0; }
+  .history::-webkit-scrollbar { display: none; }
 
-  .center {
-    position: absolute;
-    left: 50%; top: 50%;
-    transform: translate(-50%, -50%);
-    z-index: 10;
-    display: flex; flex-direction: column; align-items: center; gap: 8px;
+  .main-text {
+    flex: 1; display: flex; align-items: center; justify-content: center;
+    font-size: var(--fs-main); font-weight: 600; line-height: 1.35;
+    text-align: center; word-break: break-word;
+    padding: 8px 4px; min-height: 0;
   }
+  .main-text.placeholder { opacity: 0.3; font-weight: 400; font-size: 17px; }
+
+  .interim {
+    flex: 0 0 auto; min-height: 24px;
+    font-size: 13px; opacity: 0.55; text-align: center;
+    margin-top: 6px;
+  }
+  .interim.active::after {
+    content: ''; display: inline-block;
+    width: 6px; height: 6px; margin-left: 6px;
+    background: #ef4444; border-radius: 50%;
+    animation: blink 1s infinite;
+    vertical-align: middle;
+  }
+  @keyframes blink {
+    0%, 100% { opacity: 0.3; }
+    50% { opacity: 1; }
+  }
+
+  .center-bar {
+    position: absolute;
+    left: 0; right: 0; top: 50%;
+    transform: translateY(-50%);
+    height: 56px;
+    display: flex; align-items: center; justify-content: center;
+    gap: 12px;
+    pointer-events: none;
+    z-index: 10;
+  }
+  .center-bar > * { pointer-events: auto; }
+
   #startBtn {
-    width: 88px; height: 88px; border-radius: 50%;
-    border: 3px solid #fff;
-    background: rgba(0,0,0,0.7);
-    color: #fff; font-size: 14px; font-weight: 700;
+    width: 56px; height: 56px; border-radius: 50%;
+    border: 2px solid rgba(255,255,255,0.85);
+    background: rgba(0,0,0,0.6);
+    backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+    color: #fff; font-size: 11px; font-weight: 700; letter-spacing: 0.1em;
     cursor: pointer; font-family: inherit;
-    transition: transform 0.08s;
+    transition: transform 0.08s, background 0.15s;
   }
   #startBtn:active { transform: scale(0.92); }
   #startBtn.running {
-    background: rgba(220,38,38,0.95);
-    animation: pulse 1.4s infinite;
+    background: #dc2626;
+    border-color: #fca5a5;
+    animation: pulse 1.6s infinite;
   }
   @keyframes pulse {
-    0%, 100% { box-shadow: 0 0 0 0 rgba(255,255,255,0.5); }
-    50% { box-shadow: 0 0 0 16px rgba(255,255,255,0); }
+    0%, 100% { box-shadow: 0 0 0 0 rgba(220,38,38,0.6); }
+    50% { box-shadow: 0 0 0 14px rgba(220,38,38,0); }
   }
+  #settingsBtn, #clearBtn {
+    width: 38px; height: 38px; border-radius: 50%;
+    border: 1px solid rgba(255,255,255,0.25);
+    background: rgba(0,0,0,0.5);
+    color: #fff; font-size: 16px;
+    cursor: pointer; font-family: inherit;
+  }
+  #settingsBtn:active, #clearBtn:active { transform: scale(0.92); }
 
-  .status {
-    color: #fff; font-size: 10px; opacity: 0.7;
-    background: rgba(0,0,0,0.6); padding: 3px 10px; border-radius: 10px;
-    white-space: nowrap;
+  .panel {
+    position: fixed; left: 50%; top: 50%;
+    transform: translate(-50%, -50%);
+    background: #18181b; border: 1px solid #3f3f46;
+    border-radius: 16px; padding: 20px 22px;
+    width: min(320px, 88vw);
+    z-index: 100; display: none;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.8);
   }
+  .panel.show { display: block; }
+  .panel h3 { margin: 0 0 14px; font-size: 15px; }
+  .panel label { display: block; font-size: 12px; margin: 12px 0 4px; opacity: 0.7; }
+  .panel input[type=range] { width: 100%; accent-color: #dc2626; }
+  .panel .val { float: right; font-size: 11px; opacity: 0.6; }
+  .panel .row { display: flex; gap: 8px; margin-top: 16px; }
+  .panel button {
+    flex: 1; padding: 10px;
+    border: 1px solid #3f3f46;
+    background: #27272a; color: #fff;
+    border-radius: 8px; font-family: inherit; font-size: 13px;
+    cursor: pointer;
+  }
+  .panel button:active { transform: scale(0.97); }
+  .panel button.primary { background: #dc2626; border-color: #dc2626; }
+  .backdrop {
+    position: fixed; inset: 0; background: rgba(0,0,0,0.5);
+    z-index: 99; display: none;
+  }
+  .backdrop.show { display: block; }
 
   .err {
-    position: absolute; bottom: 110px; left: 50%; transform: translateX(-50%);
-    background: rgba(0,0,0,0.85); color: #fca5a5;
-    padding: 6px 14px; border-radius: 8px; font-size: 12px;
-    max-width: 80vw; text-align: center; z-index: 20;
+    position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%);
+    background: rgba(0,0,0,0.92); color: #fca5a5;
+    padding: 8px 16px; border-radius: 8px; font-size: 12px;
+    max-width: 80vw; text-align: center; z-index: 200;
+    border: 1px solid #7f1d1d;
   }
 </style>
 </head>
 <body>
 
 <div class="half top">
-  <div class="label">English (相手)</div>
-  <div class="heard" id="heardEn"></div>
-  <div class="translated placeholder" id="dstEn">tap center to start</div>
+  <div class="header-row">
+    <div class="lang-badge">English</div>
+    <div class="role">PARTNER</div>
+  </div>
+  <div class="history" id="histEn"></div>
+  <div class="main-text placeholder" id="dstEn">tap center to start</div>
+  <div class="interim" id="interimEn"></div>
 </div>
 
 <div class="half bottom">
-  <div class="label">日本語 (岡村)</div>
-  <div class="heard" id="heardJa"></div>
-  <div class="translated placeholder" id="dstJa">中央のボタンを押して開始</div>
+  <div class="header-row">
+    <div class="lang-badge">日本語</div>
+    <div class="role">あなた</div>
+  </div>
+  <div class="history" id="histJa"></div>
+  <div class="main-text placeholder" id="dstJa">中央のボタンで開始</div>
+  <div class="interim" id="interimJa"></div>
 </div>
 
-<div class="center">
+<div class="center-bar">
+  <button id="clearBtn" aria-label="クリア">✕</button>
   <button id="startBtn">START</button>
-  <div class="status" id="status">停止中</div>
+  <button id="settingsBtn" aria-label="設定">⚙</button>
+</div>
+
+<div class="backdrop" id="backdrop"></div>
+<div class="panel" id="panel">
+  <h3>設定</h3>
+  <label>文字サイズ <span class="val" id="vFs">30px</span></label>
+  <input type="range" id="rFs" min="20" max="56" step="2" value="30">
+  <label>読み上げ速度 <span class="val" id="vRate">1.0x</span></label>
+  <input type="range" id="rRate" min="0.6" max="1.6" step="0.1" value="1.0">
+  <label>履歴文字サイズ <span class="val" id="vHis">14px</span></label>
+  <input type="range" id="rHis" min="10" max="20" step="1" value="14">
+  <div class="row">
+    <button id="panelClose" class="primary">閉じる</button>
+  </div>
 </div>
 
 <script>
 const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-const startBtn = document.getElementById('startBtn');
-const statusEl = document.getElementById('status');
-const heardEn = document.getElementById('heardEn');
-const heardJa = document.getElementById('heardJa');
-const dstEn = document.getElementById('dstEn');
-const dstJa = document.getElementById('dstJa');
+const $ = (id) => document.getElementById(id);
+const startBtn = $('startBtn');
+const clearBtn = $('clearBtn');
+const settingsBtn = $('settingsBtn');
+const panel = $('panel');
+const backdrop = $('backdrop');
+const panelClose = $('panelClose');
+const rFs = $('rFs'), vFs = $('vFs');
+const rRate = $('rRate'), vRate = $('vRate');
+const rHis = $('rHis'), vHis = $('vHis');
+const histEn = $('histEn'), histJa = $('histJa');
+const dstEn = $('dstEn'), dstJa = $('dstJa');
+const interimEn = $('interimEn'), interimJa = $('interimJa');
+
+const cfg = JSON.parse(localStorage.getItem('cfg') || '{}');
+const fontSize = cfg.fontSize || 30;
+const histSize = cfg.histSize || 14;
+const rate = cfg.rate || 1.0;
+document.documentElement.style.setProperty('--fs-main', fontSize + 'px');
+document.documentElement.style.setProperty('--fs-history', histSize + 'px');
+rFs.value = fontSize; vFs.textContent = fontSize + 'px';
+rRate.value = rate; vRate.textContent = rate.toFixed(1) + 'x';
+rHis.value = histSize; vHis.textContent = histSize + 'px';
+
+function saveCfg() {
+  localStorage.setItem('cfg', JSON.stringify({
+    fontSize: parseInt(rFs.value),
+    histSize: parseInt(rHis.value),
+    rate: parseFloat(rRate.value),
+  }));
+}
+rFs.addEventListener('input', () => {
+  document.documentElement.style.setProperty('--fs-main', rFs.value + 'px');
+  vFs.textContent = rFs.value + 'px'; saveCfg();
+});
+rHis.addEventListener('input', () => {
+  document.documentElement.style.setProperty('--fs-history', rHis.value + 'px');
+  vHis.textContent = rHis.value + 'px'; saveCfg();
+});
+rRate.addEventListener('input', () => {
+  vRate.textContent = parseFloat(rRate.value).toFixed(1) + 'x'; saveCfg();
+});
+
+settingsBtn.addEventListener('click', () => { panel.classList.add('show'); backdrop.classList.add('show'); });
+[panelClose, backdrop].forEach(el => el.addEventListener('click', () => {
+  panel.classList.remove('show'); backdrop.classList.remove('show');
+}));
 
 let running = false;
 let recognition = null;
@@ -126,7 +265,7 @@ let currentLang = 'ja-JP';
 let speaking = false;
 
 if (!SR) {
-  showError('このブラウザは音声認識に未対応。iOSはSafariまたはChromeで開いてください');
+  showError('このブラウザは音声認識に未対応です');
   startBtn.disabled = true;
 }
 
@@ -149,9 +288,17 @@ function hasJapanese(text) {
 async function translate(text, from, to) {
   const url = `https://api.mymemory.translated.net/get?q=${encodeURIComponent(text)}&langpair=${from}|${to}`;
   const res = await fetch(url);
-  if (!res.ok) throw new Error('翻訳APIエラー ' + res.status);
+  if (!res.ok) throw new Error('翻訳API ' + res.status);
   const data = await res.json();
   return data.responseData.translatedText;
+}
+
+function pickVoice(lang) {
+  const voices = window.speechSynthesis.getVoices();
+  const target = lang.startsWith('ja') ? 'ja' : 'en';
+  return voices.find(v => v.lang.toLowerCase().startsWith(target) && /female|kyoko|samantha|google/i.test(v.name))
+      || voices.find(v => v.lang.toLowerCase().startsWith(target))
+      || null;
 }
 
 function speak(text, lang) {
@@ -159,7 +306,9 @@ function speak(text, lang) {
     if (!window.speechSynthesis) { resolve(); return; }
     const u = new SpeechSynthesisUtterance(text);
     u.lang = lang;
-    u.rate = 1.0;
+    u.rate = parseFloat(rRate.value);
+    const v = pickVoice(lang);
+    if (v) u.voice = v;
     u.onend = resolve;
     u.onerror = resolve;
     speaking = true;
@@ -168,54 +317,85 @@ function speak(text, lang) {
   }).then(() => { speaking = false; });
 }
 
+function pushHistory(elContainer, text) {
+  if (elContainer.children.length >= 20) elContainer.removeChild(elContainer.firstChild);
+  const d = document.createElement('div');
+  d.textContent = text;
+  elContainer.appendChild(d);
+  elContainer.scrollTop = elContainer.scrollHeight;
+}
+
 async function handleResult(text) {
   text = text.trim();
   if (!text) return;
   const isJa = hasJapanese(text);
   if (isJa) {
-    heardJa.textContent = text;
+    if (dstJa.textContent && !dstJa.classList.contains('placeholder')) pushHistory(histJa, dstJa.textContent);
+    dstJa.classList.remove('placeholder');
+    dstJa.textContent = text;
     dstEn.classList.remove('placeholder');
+    if (dstEn.textContent && dstEn.textContent !== '...' && dstEn.textContent !== 'listening...') pushHistory(histEn, dstEn.textContent);
     dstEn.textContent = '...';
     try {
       const t = await translate(text, 'ja', 'en');
       dstEn.textContent = t;
       await speak(t, 'en-US');
     } catch (e) {
-      dstEn.textContent = '翻訳失敗';
+      dstEn.textContent = '(translation failed)';
       showError(e.message);
     }
   } else {
-    heardEn.textContent = text;
+    if (dstEn.textContent && !dstEn.classList.contains('placeholder')) pushHistory(histEn, dstEn.textContent);
+    dstEn.classList.remove('placeholder');
+    dstEn.textContent = text;
     dstJa.classList.remove('placeholder');
+    if (dstJa.textContent && dstJa.textContent !== '...' && dstJa.textContent !== '中央のボタンで開始') pushHistory(histJa, dstJa.textContent);
     dstJa.textContent = '...';
     try {
       const t = await translate(text, 'en', 'ja');
       dstJa.textContent = t;
       await speak(t, 'ja-JP');
     } catch (e) {
-      dstJa.textContent = '翻訳失敗';
+      dstJa.textContent = '(翻訳失敗)';
       showError(e.message);
     }
   }
 }
 
+function setInterim(text, lang) {
+  if (lang === 'ja-JP') {
+    interimJa.textContent = text;
+    interimJa.classList.toggle('active', !!text);
+    interimEn.textContent = '';
+    interimEn.classList.remove('active');
+  } else {
+    interimEn.textContent = text;
+    interimEn.classList.toggle('active', !!text);
+    interimJa.textContent = '';
+    interimJa.classList.remove('active');
+  }
+}
+
 function startCycle() {
   if (!running) return;
-  if (speaking) {
-    setTimeout(startCycle, 300);
-    return;
-  }
+  if (speaking) { setTimeout(startCycle, 250); return; }
+
   recognition = new SR();
   recognition.lang = currentLang;
-  recognition.interimResults = false;
+  recognition.interimResults = true;
   recognition.continuous = false;
   recognition.maxAlternatives = 1;
 
-  statusEl.textContent = currentLang === 'ja-JP' ? '聞き取り中 (JA)' : 'Listening (EN)';
+  let finalText = '';
 
-  recognition.onresult = async (e) => {
-    const text = e.results[0][0].transcript;
-    await handleResult(text);
+  recognition.onresult = (e) => {
+    let interim = '';
+    for (let i = e.resultIndex; i < e.results.length; i++) {
+      const r = e.results[i];
+      if (r.isFinal) finalText += r[0].transcript;
+      else interim += r[0].transcript;
+    }
+    setInterim(interim || finalText, currentLang);
   };
 
   recognition.onerror = (e) => {
@@ -228,7 +408,9 @@ function startCycle() {
     }
   };
 
-  recognition.onend = () => {
+  recognition.onend = async () => {
+    setInterim('', currentLang);
+    if (finalText.trim()) await handleResult(finalText);
     currentLang = currentLang === 'ja-JP' ? 'en-US' : 'ja-JP';
     if (running) setTimeout(startCycle, 80);
   };
@@ -247,11 +429,11 @@ function startAll() {
   currentLang = 'ja-JP';
   startBtn.classList.add('running');
   startBtn.textContent = 'STOP';
-  statusEl.textContent = '起動中...';
   dstEn.classList.add('placeholder');
   dstJa.classList.add('placeholder');
   dstEn.textContent = 'listening...';
   dstJa.textContent = '聞き取り中...';
+  if (window.speechSynthesis) window.speechSynthesis.getVoices();
   startCycle();
 }
 
@@ -262,19 +444,27 @@ function stopAll() {
     recognition = null;
   }
   if (window.speechSynthesis) window.speechSynthesis.cancel();
+  setInterim('', 'ja-JP');
+  setInterim('', 'en-US');
   startBtn.classList.remove('running');
   startBtn.textContent = 'START';
-  statusEl.textContent = '停止中';
 }
 
-startBtn.addEventListener('click', () => {
-  if (running) stopAll();
-  else startAll();
+startBtn.addEventListener('click', () => { if (running) stopAll(); else startAll(); });
+clearBtn.addEventListener('click', () => {
+  histEn.innerHTML = ''; histJa.innerHTML = '';
+  dstEn.classList.add('placeholder'); dstJa.classList.add('placeholder');
+  dstEn.textContent = running ? 'listening...' : 'tap center to start';
+  dstJa.textContent = running ? '聞き取り中...' : '中央のボタンで開始';
 });
 
 document.addEventListener('visibilitychange', () => {
   if (document.hidden && running) stopAll();
 });
+
+if (window.speechSynthesis) {
+  window.speechSynthesis.onvoiceschanged = () => window.speechSynthesis.getVoices();
+}
 </script>
 </body>
 </html>
