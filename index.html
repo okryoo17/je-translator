@@ -2,238 +2,278 @@
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="通訳">
-<title>日英通訳</title>
+<title>対面通訳 JP/EN</title>
 <link rel="apple-touch-icon" href="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='22' fill='%23111'/><text x='50' y='62' font-size='52' text-anchor='middle' fill='white'>JE</text></svg>">
 <style>
   :root { color-scheme: dark; }
-  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; -webkit-user-select: none; user-select: none; }
   html, body {
-    margin: 0; padding: 0; height: 100%;
-    background: #0b0b0f; color: #f4f4f5;
+    margin: 0; padding: 0; height: 100%; width: 100%;
+    background: #000; color: #fff; overflow: hidden;
     font-family: -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Yu Gothic", sans-serif;
     overscroll-behavior: none;
   }
-  body {
+  body { display: flex; flex-direction: column; }
+
+  .half {
+    flex: 1; position: relative;
     display: flex; flex-direction: column;
-    padding: env(safe-area-inset-top) 16px env(safe-area-inset-bottom);
-    max-width: 640px; margin: 0 auto;
+    padding: env(safe-area-inset-top) 16px 16px;
+    overflow: hidden;
   }
-  header {
-    padding: 14px 4px 6px; display: flex; align-items: center; justify-content: space-between;
+  .half.top {
+    background: #1e3a8a;
+    transform: rotate(180deg);
+    transform-origin: center center;
+    padding: 16px 16px env(safe-area-inset-bottom);
   }
-  header h1 { font-size: 16px; font-weight: 600; margin: 0; letter-spacing: 0.02em; }
-  header .sub { font-size: 11px; color: #8b8b94; }
-  #log {
-    flex: 1; overflow-y: auto; padding: 8px 2px 120px;
-    -webkit-overflow-scrolling: touch;
+  .half.bottom {
+    background: #991b1b;
+    padding: 16px 16px env(safe-area-inset-bottom);
   }
-  .bubble {
-    margin: 10px 0; padding: 12px 14px; border-radius: 14px;
-    line-height: 1.5; font-size: 16px; word-break: break-word;
-    animation: pop 0.18s ease-out;
+
+  .label {
+    font-size: 11px; letter-spacing: 0.18em;
+    opacity: 0.65; text-transform: uppercase;
+    margin-bottom: 8px;
   }
-  @keyframes pop { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
-  .src { background: #1c1c22; color: #d4d4d8; }
-  .dst { background: #1e3a8a; color: #fff; font-weight: 500; }
-  .tag { font-size: 10px; color: #71717a; margin-bottom: 4px; letter-spacing: 0.08em; }
-  .controls {
-    position: fixed; left: 0; right: 0; bottom: 0;
-    padding: 12px 16px calc(env(safe-area-inset-bottom) + 12px);
-    background: linear-gradient(to top, #0b0b0f 70%, transparent);
-    display: flex; gap: 10px;
-    max-width: 640px; margin: 0 auto;
+  .heard {
+    font-size: 14px; opacity: 0.55; line-height: 1.4;
+    margin-bottom: 12px; max-height: 4.2em; overflow: hidden;
   }
-  button {
-    flex: 1; border: none; border-radius: 16px;
-    padding: 18px 12px;
-    font-size: 16px; font-weight: 600;
-    color: #fff; cursor: pointer;
-    transition: transform 0.08s, opacity 0.15s;
-    font-family: inherit;
+  .translated {
+    flex: 1; display: flex; align-items: center; justify-content: center;
+    font-size: 32px; font-weight: 600; line-height: 1.4;
+    text-align: center; word-break: break-word;
+    padding: 8px 4px;
   }
-  button:active { transform: scale(0.97); }
-  #btnJa { background: #dc2626; }
-  #btnEn { background: #2563eb; }
-  button.listening { animation: pulse 1s infinite; }
+  .translated.placeholder { opacity: 0.35; font-weight: 400; font-size: 18px; }
+
+  .center {
+    position: absolute;
+    left: 50%; top: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 10;
+    display: flex; flex-direction: column; align-items: center; gap: 8px;
+  }
+  #startBtn {
+    width: 88px; height: 88px; border-radius: 50%;
+    border: 3px solid #fff;
+    background: rgba(0,0,0,0.7);
+    color: #fff; font-size: 14px; font-weight: 700;
+    cursor: pointer; font-family: inherit;
+    transition: transform 0.08s;
+  }
+  #startBtn:active { transform: scale(0.92); }
+  #startBtn.running {
+    background: rgba(220,38,38,0.95);
+    animation: pulse 1.4s infinite;
+  }
   @keyframes pulse {
-    0%, 100% { opacity: 1; box-shadow: 0 0 0 0 rgba(255,255,255,0.4); }
-    50% { opacity: 0.85; box-shadow: 0 0 0 12px rgba(255,255,255,0); }
+    0%, 100% { box-shadow: 0 0 0 0 rgba(255,255,255,0.5); }
+    50% { box-shadow: 0 0 0 16px rgba(255,255,255,0); }
   }
-  button:disabled { opacity: 0.4; }
-  #empty {
-    color: #52525b; text-align: center; padding: 60px 20px; font-size: 14px; line-height: 1.7;
+
+  .status {
+    color: #fff; font-size: 10px; opacity: 0.7;
+    background: rgba(0,0,0,0.6); padding: 3px 10px; border-radius: 10px;
+    white-space: nowrap;
   }
-  #empty b { color: #a1a1aa; }
-  .err { color: #f87171; font-size: 13px; text-align: center; padding: 8px; }
-  #clear {
-    position: absolute; right: 8px; top: 12px;
-    background: transparent; border: 1px solid #3f3f46; color: #a1a1aa;
-    padding: 4px 10px; font-size: 11px; border-radius: 8px; flex: none;
+
+  .err {
+    position: absolute; bottom: 110px; left: 50%; transform: translateX(-50%);
+    background: rgba(0,0,0,0.85); color: #fca5a5;
+    padding: 6px 14px; border-radius: 8px; font-size: 12px;
+    max-width: 80vw; text-align: center; z-index: 20;
   }
 </style>
 </head>
 <body>
-<header>
-  <div>
-    <h1>日英通訳</h1>
-    <div class="sub">話す言語のボタンを押して話す</div>
-  </div>
-  <button id="clear">クリア</button>
-</header>
 
-<div id="log">
-  <div id="empty">
-    <b>使い方</b><br>
-    赤ボタン＝日本語を話す → 英語に翻訳<br>
-    青ボタン＝英語を話す → 日本語に翻訳<br><br>
-    ボタンを押して話し終わったらもう一度押す<br>
-    （または1.5秒沈黙で自動停止）
-  </div>
+<div class="half top">
+  <div class="label">English (相手)</div>
+  <div class="heard" id="heardEn"></div>
+  <div class="translated placeholder" id="dstEn">tap center to start</div>
 </div>
 
-<div class="controls">
-  <button id="btnJa">🇯🇵 日本語を話す</button>
-  <button id="btnEn">🇬🇧 Speak English</button>
+<div class="half bottom">
+  <div class="label">日本語 (岡村)</div>
+  <div class="heard" id="heardJa"></div>
+  <div class="translated placeholder" id="dstJa">中央のボタンを押して開始</div>
+</div>
+
+<div class="center">
+  <button id="startBtn">START</button>
+  <div class="status" id="status">停止中</div>
 </div>
 
 <script>
 const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-const log = document.getElementById('log');
-const empty = document.getElementById('empty');
-const btnJa = document.getElementById('btnJa');
-const btnEn = document.getElementById('btnEn');
-const btnClear = document.getElementById('clear');
+const startBtn = document.getElementById('startBtn');
+const statusEl = document.getElementById('status');
+const heardEn = document.getElementById('heardEn');
+const heardJa = document.getElementById('heardJa');
+const dstEn = document.getElementById('dstEn');
+const dstJa = document.getElementById('dstJa');
 
+let running = false;
 let recognition = null;
-let currentMode = null;
+let currentLang = 'ja-JP';
+let speaking = false;
 
 if (!SR) {
-  showError('このブラウザは音声認識に未対応です。iOSはSafariまたはChromeをお試しください。');
-  btnJa.disabled = true; btnEn.disabled = true;
+  showError('このブラウザは音声認識に未対応。iOSはSafariまたはChromeで開いてください');
+  startBtn.disabled = true;
 }
 
 function showError(msg) {
-  const div = document.createElement('div');
-  div.className = 'err';
-  div.textContent = msg;
-  log.appendChild(div);
-  log.scrollTop = log.scrollHeight;
+  let el = document.querySelector('.err');
+  if (!el) {
+    el = document.createElement('div');
+    el.className = 'err';
+    document.body.appendChild(el);
+  }
+  el.textContent = msg;
+  clearTimeout(showError._t);
+  showError._t = setTimeout(() => el.remove(), 4000);
 }
 
-function addBubble(text, kind, tag) {
-  if (empty.parentNode) empty.remove();
-  const t = document.createElement('div');
-  t.className = 'tag'; t.textContent = tag;
-  const b = document.createElement('div');
-  b.className = 'bubble ' + kind;
-  b.textContent = text;
-  log.appendChild(t); log.appendChild(b);
-  log.scrollTop = log.scrollHeight;
-  return b;
+function hasJapanese(text) {
+  return /[぀-ゟ゠-ヿ一-鿿]/.test(text);
 }
 
 async function translate(text, from, to) {
   const url = `https://api.mymemory.translated.net/get?q=${encodeURIComponent(text)}&langpair=${from}|${to}`;
   const res = await fetch(url);
-  if (!res.ok) throw new Error('翻訳APIエラー');
+  if (!res.ok) throw new Error('翻訳APIエラー ' + res.status);
   const data = await res.json();
   return data.responseData.translatedText;
 }
 
 function speak(text, lang) {
-  if (!window.speechSynthesis) return;
-  const u = new SpeechSynthesisUtterance(text);
-  u.lang = lang;
-  u.rate = 1.0;
-  window.speechSynthesis.cancel();
-  window.speechSynthesis.speak(u);
+  return new Promise((resolve) => {
+    if (!window.speechSynthesis) { resolve(); return; }
+    const u = new SpeechSynthesisUtterance(text);
+    u.lang = lang;
+    u.rate = 1.0;
+    u.onend = resolve;
+    u.onerror = resolve;
+    speaking = true;
+    window.speechSynthesis.cancel();
+    window.speechSynthesis.speak(u);
+  }).then(() => { speaking = false; });
 }
 
-function startListening(mode) {
-  if (recognition) {
-    stopListening();
+async function handleResult(text) {
+  text = text.trim();
+  if (!text) return;
+  const isJa = hasJapanese(text);
+  if (isJa) {
+    heardJa.textContent = text;
+    dstEn.classList.remove('placeholder');
+    dstEn.textContent = '...';
+    try {
+      const t = await translate(text, 'ja', 'en');
+      dstEn.textContent = t;
+      await speak(t, 'en-US');
+    } catch (e) {
+      dstEn.textContent = '翻訳失敗';
+      showError(e.message);
+    }
+  } else {
+    heardEn.textContent = text;
+    dstJa.classList.remove('placeholder');
+    dstJa.textContent = '...';
+    try {
+      const t = await translate(text, 'en', 'ja');
+      dstJa.textContent = t;
+      await speak(t, 'ja-JP');
+    } catch (e) {
+      dstJa.textContent = '翻訳失敗';
+      showError(e.message);
+    }
+  }
+}
+
+function startCycle() {
+  if (!running) return;
+  if (speaking) {
+    setTimeout(startCycle, 300);
     return;
   }
-  currentMode = mode;
   recognition = new SR();
-  recognition.lang = mode === 'ja' ? 'ja-JP' : 'en-US';
+  recognition.lang = currentLang;
   recognition.interimResults = false;
   recognition.continuous = false;
   recognition.maxAlternatives = 1;
 
-  const btn = mode === 'ja' ? btnJa : btnEn;
-  const otherBtn = mode === 'ja' ? btnEn : btnJa;
-  btn.classList.add('listening');
-  btn.textContent = mode === 'ja' ? '🎤 聞いてます...' : '🎤 Listening...';
-  otherBtn.disabled = true;
+  statusEl.textContent = currentLang === 'ja-JP' ? '聞き取り中 (JA)' : 'Listening (EN)';
 
   recognition.onresult = async (e) => {
-    const text = e.results[0][0].transcript.trim();
-    if (!text) return;
-    addBubble(text, 'src', mode === 'ja' ? '日本語' : 'English');
-    const placeholder = addBubble('翻訳中...', 'dst', mode === 'ja' ? 'English' : '日本語');
-    try {
-      const from = mode === 'ja' ? 'ja' : 'en';
-      const to = mode === 'ja' ? 'en' : 'ja';
-      const translated = await translate(text, from, to);
-      placeholder.textContent = translated;
-      speak(translated, mode === 'ja' ? 'en-US' : 'ja-JP');
-    } catch (err) {
-      placeholder.textContent = '翻訳失敗: ' + err.message;
-    }
+    const text = e.results[0][0].transcript;
+    await handleResult(text);
   };
 
   recognition.onerror = (e) => {
-    if (e.error !== 'aborted' && e.error !== 'no-speech') {
-      showError('音声認識エラー: ' + e.error);
+    if (e.error === 'not-allowed' || e.error === 'service-not-allowed') {
+      running = false;
+      showError('マイク権限が拒否されています');
+      stopAll();
+    } else if (e.error !== 'no-speech' && e.error !== 'aborted') {
+      console.warn('recog err:', e.error);
     }
   };
 
   recognition.onend = () => {
-    stopListening();
+    currentLang = currentLang === 'ja-JP' ? 'en-US' : 'ja-JP';
+    if (running) setTimeout(startCycle, 80);
   };
 
   try {
     recognition.start();
   } catch (err) {
     showError('開始失敗: ' + err.message);
-    stopListening();
+    setTimeout(startCycle, 500);
   }
 }
 
-function stopListening() {
+function startAll() {
+  if (running) return;
+  running = true;
+  currentLang = 'ja-JP';
+  startBtn.classList.add('running');
+  startBtn.textContent = 'STOP';
+  statusEl.textContent = '起動中...';
+  dstEn.classList.add('placeholder');
+  dstJa.classList.add('placeholder');
+  dstEn.textContent = 'listening...';
+  dstJa.textContent = '聞き取り中...';
+  startCycle();
+}
+
+function stopAll() {
+  running = false;
   if (recognition) {
     try { recognition.stop(); } catch(e) {}
     recognition = null;
   }
-  btnJa.classList.remove('listening');
-  btnEn.classList.remove('listening');
-  btnJa.disabled = false;
-  btnEn.disabled = false;
-  btnJa.textContent = '🇯🇵 日本語を話す';
-  btnEn.textContent = '🇬🇧 Speak English';
-  currentMode = null;
+  if (window.speechSynthesis) window.speechSynthesis.cancel();
+  startBtn.classList.remove('running');
+  startBtn.textContent = 'START';
+  statusEl.textContent = '停止中';
 }
 
-btnJa.addEventListener('click', () => {
-  if (currentMode === 'ja') stopListening();
-  else if (currentMode === 'en') { stopListening(); setTimeout(() => startListening('ja'), 100); }
-  else startListening('ja');
+startBtn.addEventListener('click', () => {
+  if (running) stopAll();
+  else startAll();
 });
 
-btnEn.addEventListener('click', () => {
-  if (currentMode === 'en') stopListening();
-  else if (currentMode === 'ja') { stopListening(); setTimeout(() => startListening('en'), 100); }
-  else startListening('en');
-});
-
-btnClear.addEventListener('click', () => {
-  log.innerHTML = '';
-  log.appendChild(empty);
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden && running) stopAll();
 });
 </script>
 </body>
