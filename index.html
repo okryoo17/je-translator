@@ -54,7 +54,10 @@
   .lang-badge {
     font-size: 10px; letter-spacing: 0.18em; opacity: 0.4;
     text-transform: uppercase; font-weight: 600;
-    transition: opacity 0.15s, color 0.15s;
+    transition: opacity 0.15s, color 0.15s, background 0.15s;
+    padding: 4px 10px; border-radius: 6px;
+    cursor: pointer;
+    border: 1px solid transparent;
   }
   .lang-badge.active {
     opacity: 1;
@@ -62,6 +65,13 @@
     text-shadow: 0 0 8px rgba(253, 224, 71, 0.5);
   }
   .lang-badge.active::before { content: '🎤 '; }
+  .lang-badge.locked {
+    opacity: 1;
+    background: rgba(253, 224, 71, 0.18);
+    border-color: #fde047;
+    color: #fef3c7;
+  }
+  .lang-badge.locked::after { content: ' 🔒'; }
   .role { font-size: 10px; opacity: 0.45; letter-spacing: 0.1em; }
   .history {
     flex: 0 0 auto; max-height: 28%; overflow-y: auto;
@@ -588,6 +598,17 @@ function setMicState(state) {
 let running = false;
 let recognition = null;
 let currentLang = 'ja-JP';
+let lockedLang = null; // null | 'ja-JP' | 'en-US'
+
+function toggleLock(lang) {
+  lockedLang = (lockedLang === lang) ? null : lang;
+  if (lockedLang) currentLang = lockedLang;
+  updateLangIndicator();
+}
+document.querySelectorAll('.half.bottom .lang-badge').forEach(el =>
+  el.addEventListener('click', (e) => { e.stopPropagation(); toggleLock('ja-JP'); }));
+document.querySelectorAll('.half.top .lang-badge').forEach(el =>
+  el.addEventListener('click', (e) => { e.stopPropagation(); toggleLock('en-US'); }));
 
 if (!SR) { showError('このブラウザは音声認識に未対応'); startBtn.disabled = true; }
 
@@ -663,10 +684,15 @@ async function handleResult(text) {
 }
 
 function updateLangIndicator() {
+  // ロック状態は常に反映（停止中でも視覚的に分かるように）
+  document.querySelectorAll('.half.bottom .lang-badge').forEach(el => el.classList.toggle('locked', lockedLang === 'ja-JP'));
+  document.querySelectorAll('.half.top .lang-badge').forEach(el => el.classList.toggle('locked', lockedLang === 'en-US'));
+
   if (!running) {
     document.querySelectorAll('.lang-badge').forEach(el => el.classList.remove('active'));
     startBtn.classList.remove('ja', 'en');
-    confHead.querySelector('.title').textContent = '会議モード — 全員の発言を字幕表示';
+    const lockTxt = lockedLang === 'ja-JP' ? '🔒 JA固定中 ─ ' : lockedLang === 'en-US' ? '🔒 EN固定中 ─ ' : '';
+    confHead.querySelector('.title').textContent = lockTxt + '会議モード — 全員の発言を字幕表示';
     return;
   }
   const isJa = currentLang === 'ja-JP';
@@ -674,8 +700,10 @@ function updateLangIndicator() {
   document.querySelectorAll('.half.top .lang-badge').forEach(el => el.classList.toggle('active', !isJa));
   startBtn.classList.toggle('ja', isJa);
   startBtn.classList.toggle('en', !isJa);
-  startBtn.textContent = isJa ? '🎤 JA' : '🎤 EN';
-  confHead.querySelector('.title').textContent = isJa ? '🎤 聞き取り中: 日本語 ─ 会議モード' : '🎤 Listening: English ─ 会議モード';
+  const lock = lockedLang ? ' 🔒' : '';
+  startBtn.textContent = (isJa ? '🎤 JA' : '🎤 EN') + lock;
+  const head = isJa ? '🎤 聞き取り中: 日本語' : '🎤 Listening: English';
+  confHead.querySelector('.title').textContent = head + (lockedLang ? ' 🔒固定' : '') + ' ─ 会議モード';
 }
 
 function setInterim(text, lang) {
@@ -731,7 +759,11 @@ function startCycle() {
   recognition.onend = () => {
     setInterim('', currentLang);
     if (finalText.trim()) handleResult(finalText);
-    currentLang = currentLang === 'ja-JP' ? 'en-US' : 'ja-JP';
+    if (lockedLang) {
+      currentLang = lockedLang; // ロック中は同じ言語のまま
+    } else {
+      currentLang = currentLang === 'ja-JP' ? 'en-US' : 'ja-JP';
+    }
     if (running) setTimeout(startCycle, 30);
   };
 
@@ -742,7 +774,7 @@ function startCycle() {
 function startAll() {
   if (running) return;
   running = true;
-  currentLang = 'ja-JP';
+  currentLang = lockedLang || 'ja-JP';
   startBtn.classList.add('running');
   confHead.classList.add('live');
   dstEn.classList.add('placeholder');
