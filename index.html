@@ -15,7 +15,6 @@
     color-scheme: dark;
     --fs-main: 32px;
     --fs-history: 14px;
-    --fs-conf: 22px;
   }
   * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; -webkit-user-select: none; user-select: none; }
   html, body {
@@ -26,28 +25,23 @@
   }
   body { display: flex; flex-direction: column; }
 
-  /* ========== 対面モード ========== */
-  body[data-mode="conf"] .half { display: none; }
-  body[data-mode="face"] #conferenceView { display: none; }
-
   .half {
     flex: 1; position: relative;
     display: flex; flex-direction: column;
     overflow: hidden;
     padding: 14px 18px;
+    transition: opacity 0.2s, filter 0.2s;
   }
   .half.top {
     background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%);
     transform: rotate(180deg);
     padding-top: max(14px, env(safe-area-inset-top));
     padding-bottom: 56px;
-    transition: opacity 0.2s, filter 0.2s;
   }
   .half.bottom {
     background: linear-gradient(0deg, #1c1917 0%, #0c0a09 100%);
     padding-top: 56px;
     padding-bottom: max(14px, env(safe-area-inset-bottom));
-    transition: opacity 0.2s, filter 0.2s;
   }
   .half.dim { opacity: 0.35; filter: grayscale(0.5); }
   .header-row {
@@ -96,91 +90,7 @@
     font-size: 13px; opacity: 0.55; text-align: center;
     margin-top: 4px;
   }
-
-  /* ========== 会議モード ========== */
-  #conferenceView {
-    flex: 1;
-    display: flex; flex-direction: column;
-    background: linear-gradient(180deg, #0c0a09 0%, #1c1917 100%);
-    padding: max(12px, env(safe-area-inset-top)) 16px 0;
-    overflow: hidden;
-  }
-  .conf-header {
-    flex: 0 0 auto;
-    padding: 6px 4px 10px;
-    display: flex; align-items: center; gap: 8px;
-    border-bottom: 1px solid #27272a;
-    margin-bottom: 8px;
-  }
-  .conf-header .title { font-size: 12px; opacity: 0.6; letter-spacing: 0.1em; flex: 1; min-width: 0; }
-  .conf-header .dot { width: 8px; height: 8px; border-radius: 50%; background: #52525b; flex: 0 0 auto; }
-  .conf-header.live .dot { background: #ef4444; animation: blink 1s infinite; }
-  .conf-lock-controls { display: flex; gap: 6px; flex: 0 0 auto; }
-  .conf-lock-controls button {
-    border: 1px solid #3f3f46; background: rgba(0,0,0,0.4);
-    color: #a1a1aa; padding: 5px 10px; border-radius: 6px;
-    font-size: 11px; font-family: inherit; font-weight: 600;
-    cursor: pointer;
-    -webkit-user-select: none; user-select: none;
-  }
-  .conf-lock-controls button:active { transform: scale(0.94); }
-  .conf-lock-controls button.active {
-    background: rgba(253,224,71,0.2);
-    border-color: #fde047;
-    color: #fef3c7;
-  }
-
-  #confLog {
-    flex: 1; overflow-y: auto; padding-bottom: 120px;
-    -webkit-overflow-scrolling: touch;
-  }
-  #confLog::-webkit-scrollbar { display: none; }
-  .conf-msg {
-    margin: 10px 0; padding: 10px 12px;
-    border-radius: 12px; border-left: 3px solid;
-    animation: pop 0.2s ease-out;
-  }
-  @keyframes pop { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
-  .conf-msg.from-ja { background: #1c1917; border-color: #dc2626; }
-  .conf-msg.from-en { background: #0f172a; border-color: #3b82f6; }
-  .conf-msg .tag {
-    font-size: 9px; letter-spacing: 0.14em; opacity: 0.55;
-    margin-bottom: 4px; font-weight: 600;
-  }
-  .conf-msg .src {
-    font-size: 12px; line-height: 1.45; opacity: 0.55;
-    margin-bottom: 5px;
-  }
-  .conf-msg .dst {
-    font-size: var(--fs-conf); line-height: 1.4; font-weight: 600;
-  }
-  #confInterim {
-    position: absolute; left: 16px; right: 16px;
-    bottom: 80px;
-    text-align: center; font-size: 13px; opacity: 0.5;
-    pointer-events: none;
-    min-height: 20px;
-  }
-
-  /* ========== 共通：中央バー ========== */
-  body[data-mode="face"] .center-bar {
-    position: absolute; left: 0; right: 0; top: 50%;
-    transform: translateY(-50%);
-  }
-  body[data-mode="conf"] .center-bar {
-    position: absolute; left: 0; right: 0;
-    bottom: max(14px, env(safe-area-inset-bottom));
-  }
-  .center-bar {
-    height: 56px;
-    display: flex; align-items: center; justify-content: center;
-    gap: 12px;
-    pointer-events: none;
-    z-index: 10;
-  }
-  .center-bar > * { pointer-events: auto; }
-
-  .interim.active::after, #confInterim.active::after {
+  .interim.active::after {
     content: ''; display: inline-block;
     width: 6px; height: 6px; margin-left: 6px;
     background: #ef4444; border-radius: 50%;
@@ -188,6 +98,17 @@
     vertical-align: middle;
   }
   @keyframes blink { 0%, 100% { opacity: 0.3; } 50% { opacity: 1; } }
+
+  .center-bar {
+    position: absolute; left: 0; right: 0; top: 50%;
+    transform: translateY(-50%);
+    height: 56px;
+    display: flex; align-items: center; justify-content: center;
+    gap: 12px;
+    pointer-events: none;
+    z-index: 10;
+  }
+  .center-bar > * { pointer-events: auto; }
 
   #startBtn {
     width: 56px; height: 56px; border-radius: 50%;
@@ -217,7 +138,18 @@
     cursor: pointer; font-family: inherit;
   }
   .icon-btn:active { transform: scale(0.92); }
-  .icon-btn.active { background: #1e40af; border-color: #60a5fa; }
+
+  /* マイクインジケータ */
+  .mic-meter {
+    position: absolute; left: 50%; transform: translateX(-50%);
+    width: 4px; border-radius: 2px;
+    background: #dc2626;
+    bottom: 70px; height: 4px;
+    transition: height 0.08s, background 0.15s;
+    z-index: 5; pointer-events: none;
+    opacity: 0;
+  }
+  .mic-meter.live { opacity: 1; }
 
   /* ========== モーダル・設定 ========== */
   .modal {
@@ -273,19 +205,6 @@
   }
   .hl { background: #fbbf2455; padding: 0 2px; border-radius: 2px; }
 
-  /* マイクインジケータ */
-  .mic-meter {
-    position: absolute; left: 50%; transform: translateX(-50%);
-    width: 4px; border-radius: 2px;
-    background: #dc2626;
-    bottom: 70px; height: 4px;
-    transition: height 0.08s, background 0.15s;
-    z-index: 5; pointer-events: none;
-    opacity: 0;
-  }
-  body[data-mode="conf"] .mic-meter { bottom: 90px; }
-  .mic-meter.live { opacity: 1; }
-
   .panel {
     position: fixed; left: 50%; top: 50%;
     transform: translate(-50%, -50%);
@@ -317,9 +236,8 @@
   }
 </style>
 </head>
-<body data-mode="face">
+<body>
 
-<!-- ========== 対面モード ========== -->
 <div class="half top">
   <div class="header-row">
     <div class="lang-badge">English</div>
@@ -340,31 +258,14 @@
   <div class="interim" id="interimJa"></div>
 </div>
 
-<!-- ========== 会議モード ========== -->
-<div id="conferenceView">
-  <div class="conf-header" id="confHead">
-    <div class="dot"></div>
-    <div class="title">会議モード — 全員の発言を字幕表示</div>
-    <div class="conf-lock-controls">
-      <button id="confLockJa" type="button">JA 🔒</button>
-      <button id="confLockEn" type="button">EN 🔒</button>
-    </div>
-  </div>
-  <div id="confLog"></div>
-  <div id="confInterim"></div>
-</div>
-
 <div class="mic-meter" id="micMeter"></div>
 
-<!-- ========== 中央バー ========== -->
 <div class="center-bar">
   <button id="logBtn" class="icon-btn" aria-label="議事録">📋</button>
-  <button id="modeBtn" class="icon-btn" aria-label="モード切替">👥</button>
   <button id="startBtn">START</button>
   <button id="settingsBtn" class="icon-btn" aria-label="設定">⚙</button>
 </div>
 
-<!-- ========== 議事録モーダル ========== -->
 <div class="modal" id="logModal">
   <div class="modal-head">
     <h2>議事録</h2>
@@ -381,14 +282,11 @@
   <div class="modal-body" id="logBody"></div>
 </div>
 
-<!-- ========== 設定パネル ========== -->
 <div class="backdrop" id="backdrop"></div>
 <div class="panel" id="panel">
   <h3>設定</h3>
-  <label>文字サイズ（対面） <span class="val" id="vFs">32px</span></label>
+  <label>文字サイズ <span class="val" id="vFs">32px</span></label>
   <input type="range" id="rFs" min="20" max="60" step="2" value="32">
-  <label>文字サイズ（会議） <span class="val" id="vConf">22px</span></label>
-  <input type="range" id="rConf" min="14" max="36" step="1" value="22">
   <label>履歴文字サイズ <span class="val" id="vHis">14px</span></label>
   <input type="range" id="rHis" min="10" max="20" step="1" value="14">
   <div class="row"><button id="panelClose">閉じる</button></div>
@@ -399,7 +297,6 @@ const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
 const $ = (id) => document.getElementById(id);
 const startBtn = $('startBtn');
 const logBtn = $('logBtn');
-const modeBtn = $('modeBtn');
 const settingsBtn = $('settingsBtn');
 const logModal = $('logModal');
 const logBody = $('logBody');
@@ -408,50 +305,34 @@ const logClear = $('logClear');
 const logClose = $('logClose');
 const logSearch = $('logSearch');
 const logDate = $('logDate');
-const micMeter = $('micMeter');
 const panel = $('panel');
 const backdrop = $('backdrop');
 const panelClose = $('panelClose');
 const rFs = $('rFs'), vFs = $('vFs');
-const rConf = $('rConf'), vConf = $('vConf');
 const rHis = $('rHis'), vHis = $('vHis');
 const histEn = $('histEn'), histJa = $('histJa');
 const dstEn = $('dstEn'), dstJa = $('dstJa');
 const interimEn = $('interimEn'), interimJa = $('interimJa');
-const confLog = $('confLog');
-const confInterim = $('confInterim');
-const confHead = $('confHead');
+const micMeter = $('micMeter');
 
 // ---- 設定 ----
 const cfg = JSON.parse(localStorage.getItem('cfg') || '{}');
 const fontSize = cfg.fontSize || 32;
-const confSize = cfg.confSize || 22;
 const histSize = cfg.histSize || 14;
-const initialMode = cfg.mode || 'face';
-document.body.dataset.mode = initialMode;
-modeBtn.classList.toggle('active', initialMode === 'conf');
 document.documentElement.style.setProperty('--fs-main', fontSize + 'px');
-document.documentElement.style.setProperty('--fs-conf', confSize + 'px');
 document.documentElement.style.setProperty('--fs-history', histSize + 'px');
 rFs.value = fontSize; vFs.textContent = fontSize + 'px';
-rConf.value = confSize; vConf.textContent = confSize + 'px';
 rHis.value = histSize; vHis.textContent = histSize + 'px';
 
 function saveCfg() {
   localStorage.setItem('cfg', JSON.stringify({
     fontSize: parseInt(rFs.value),
-    confSize: parseInt(rConf.value),
     histSize: parseInt(rHis.value),
-    mode: document.body.dataset.mode,
   }));
 }
 rFs.addEventListener('input', () => {
   document.documentElement.style.setProperty('--fs-main', rFs.value + 'px');
   vFs.textContent = rFs.value + 'px'; saveCfg();
-});
-rConf.addEventListener('input', () => {
-  document.documentElement.style.setProperty('--fs-conf', rConf.value + 'px');
-  vConf.textContent = rConf.value + 'px'; saveCfg();
 });
 rHis.addEventListener('input', () => {
   document.documentElement.style.setProperty('--fs-history', rHis.value + 'px');
@@ -462,13 +343,6 @@ settingsBtn.addEventListener('click', () => { panel.classList.add('show'); backd
 [panelClose, backdrop].forEach(el => el.addEventListener('click', () => {
   panel.classList.remove('show'); backdrop.classList.remove('show');
 }));
-
-modeBtn.addEventListener('click', () => {
-  const next = document.body.dataset.mode === 'face' ? 'conf' : 'face';
-  document.body.dataset.mode = next;
-  modeBtn.classList.toggle('active', next === 'conf');
-  saveCfg();
-});
 
 // ---- 議事録 ----
 let logEntries = JSON.parse(localStorage.getItem('logEntries') || '[]');
@@ -491,7 +365,6 @@ function dateLabel(key) {
   const days = ['日','月','火','水','木','金','土'];
   return `${d.getFullYear()}年${d.getMonth()+1}月${d.getDate()}日 (${days[d.getDay()]})`;
 }
-
 function rebuildDateOptions() {
   const keys = [...new Set(logEntries.map(e => dateKey(e.ts)))].sort().reverse();
   const cur = logDate.value;
@@ -499,7 +372,9 @@ function rebuildDateOptions() {
     keys.map(k => `<option value="${k}">${dateLabel(k)}</option>`).join('');
   if (keys.includes(cur)) logDate.value = cur;
 }
-
+function escapeHtml(s) {
+  return s.replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
 function highlight(text, q) {
   if (!q) return escapeHtml(text);
   const lower = text.toLowerCase();
@@ -513,7 +388,6 @@ function highlight(text, q) {
   }
   return out;
 }
-
 function renderLog() {
   const q = logSearch.value.trim();
   const filterDate = logDate.value;
@@ -527,7 +401,6 @@ function renderLog() {
     logBody.innerHTML = '<div class="empty-log">' + (logEntries.length === 0 ? 'まだ記録がありません' : '該当なし') + '</div>';
     return;
   }
-  // 日付別グルーピング
   const groups = {};
   for (const e of filtered) {
     const k = dateKey(e.ts);
@@ -552,22 +425,17 @@ function renderLog() {
   }
   logBody.scrollTop = logBody.scrollHeight;
 }
-
 logSearch.addEventListener('input', renderLog);
 logDate.addEventListener('change', renderLog);
-function escapeHtml(s) {
-  return s.replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-}
 function addLog(from, src, dst) {
   logEntries.push({ ts: Date.now(), from, src, dst });
   saveLog();
-  appendConfMessage(from, src, dst);
 }
 logBtn.addEventListener('click', () => { rebuildDateOptions(); renderLog(); logModal.classList.add('show'); });
 logClose.addEventListener('click', () => logModal.classList.remove('show'));
 logClear.addEventListener('click', () => {
-  if (!confirm('議事録を全削除しますか？（会議モードの字幕も消えます）')) return;
-  logEntries = []; saveLog(); renderLog(); confLog.innerHTML = '';
+  if (!confirm('議事録を全削除しますか？')) return;
+  logEntries = []; saveLog(); renderLog();
 });
 logCopy.addEventListener('click', async () => {
   const text = logEntries.map(e => `[${fmtTs(e.ts)}] ${e.from === 'ja' ? 'JA→EN' : 'EN→JA'}\n  ${e.src}\n  ${e.dst}`).join('\n\n');
@@ -578,48 +446,19 @@ logCopy.addEventListener('click', async () => {
   } catch (e) { showError('コピー失敗: ' + e.message); }
 });
 
-// 会議モードに過去ログ初期表示
-function initConfLog() {
-  confLog.innerHTML = '';
-  const recent = logEntries.slice(-30);
-  for (const e of recent) appendConfMessage(e.from, e.src, e.dst, false);
-  confLog.scrollTop = confLog.scrollHeight;
-}
-function appendConfMessage(from, src, dst, animate = true) {
-  const div = document.createElement('div');
-  div.className = 'conf-msg ' + (from === 'ja' ? 'from-ja' : 'from-en');
-  if (!animate) div.style.animation = 'none';
-  const tag = from === 'ja' ? 'JA → EN' : 'EN → JA';
-  div.innerHTML = `<div class="tag">${tag}</div>
-    <div class="src">${escapeHtml(src)}</div>
-    <div class="dst">${escapeHtml(dst)}</div>`;
-  confLog.appendChild(div);
-  while (confLog.children.length > 60) confLog.removeChild(confLog.firstChild);
-  confLog.scrollTop = confLog.scrollHeight;
-}
-initConfLog();
-
-// ---- マイクインジケータ（SpeechRecognitionのイベントで連動・getUserMedia不使用） ----
+// ---- マイクインジケータ（SpeechRecognitionイベント連動・getUserMedia不使用） ----
 function setMicState(state) {
-  // state: 'idle' | 'listening' | 'speaking'
   micMeter.classList.toggle('live', state !== 'idle');
-  if (state === 'speaking') {
-    micMeter.style.background = '#22c55e';
-    micMeter.style.height = '64px';
-  } else if (state === 'listening') {
-    micMeter.style.background = '#eab308';
-    micMeter.style.height = '20px';
-  } else {
-    micMeter.style.background = '#dc2626';
-    micMeter.style.height = '4px';
-  }
+  if (state === 'speaking') { micMeter.style.background = '#22c55e'; micMeter.style.height = '64px'; }
+  else if (state === 'listening') { micMeter.style.background = '#eab308'; micMeter.style.height = '20px'; }
+  else { micMeter.style.background = '#dc2626'; micMeter.style.height = '4px'; }
 }
 
 // ---- 音声認識・翻訳 ----
 let running = false;
 let recognition = null;
 let currentLang = 'ja-JP';
-let lockedLang = null; // null | 'ja-JP' | 'en-US'
+let lockedLang = null;
 
 function toggleLock(lang) {
   lockedLang = (lockedLang === lang) ? null : lang;
@@ -630,8 +469,40 @@ document.querySelectorAll('.half.bottom .lang-badge').forEach(el =>
   el.addEventListener('click', (e) => { e.stopPropagation(); toggleLock('ja-JP'); }));
 document.querySelectorAll('.half.top .lang-badge').forEach(el =>
   el.addEventListener('click', (e) => { e.stopPropagation(); toggleLock('en-US'); }));
-$('confLockJa').addEventListener('click', (e) => { e.stopPropagation(); toggleLock('ja-JP'); });
-$('confLockEn').addEventListener('click', (e) => { e.stopPropagation(); toggleLock('en-US'); });
+
+function updateLangIndicator() {
+  const halfBottom = document.querySelector('.half.bottom');
+  const halfTop = document.querySelector('.half.top');
+  const badgesBottom = document.querySelectorAll('.half.bottom .lang-badge');
+  const badgesTop = document.querySelectorAll('.half.top .lang-badge');
+
+  document.querySelectorAll('.lang-badge').forEach(el => { el.classList.remove('active', 'locked'); });
+  halfBottom.classList.remove('dim');
+  halfTop.classList.remove('dim');
+
+  if (lockedLang === 'ja-JP') {
+    badgesBottom.forEach(el => el.classList.add('locked', 'active'));
+    halfTop.classList.add('dim');
+  } else if (lockedLang === 'en-US') {
+    badgesTop.forEach(el => el.classList.add('locked', 'active'));
+    halfBottom.classList.add('dim');
+  } else if (running) {
+    const isJa = currentLang === 'ja-JP';
+    if (isJa) badgesBottom.forEach(el => el.classList.add('active'));
+    else badgesTop.forEach(el => el.classList.add('active'));
+  }
+
+  if (!running) {
+    startBtn.classList.remove('ja', 'en');
+    startBtn.textContent = lockedLang ? (lockedLang === 'ja-JP' ? 'START (JA🔒)' : 'START (EN🔒)') : 'START';
+  } else {
+    const showJa = lockedLang ? lockedLang === 'ja-JP' : currentLang === 'ja-JP';
+    startBtn.classList.toggle('ja', showJa);
+    startBtn.classList.toggle('en', !showJa);
+    const lock = lockedLang ? ' 🔒' : '';
+    startBtn.textContent = (showJa ? '🎤 JA' : '🎤 EN') + lock;
+  }
+}
 
 if (!SR) { showError('このブラウザは音声認識に未対応'); startBtn.disabled = true; }
 
@@ -646,9 +517,11 @@ function showError(msg) {
   clearTimeout(showError._t);
   showError._t = setTimeout(() => el.remove(), 10000);
 }
+
 function hasJapanese(text) {
   return /[぀-ゟ゠-ヿ一-鿿]/.test(text);
 }
+
 async function translate(text, from, to) {
   const url = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=${from}&tl=${to}&dt=t&q=${encodeURIComponent(text)}`;
   let gErr = null;
@@ -667,6 +540,7 @@ async function translate(text, from, to) {
     throw new Error('翻訳API両方失敗 (google:' + (gErr && gErr.message) + ' / mm:' + e.message + ')');
   }
 }
+
 function pushHistory(elContainer, text) {
   if (elContainer.children.length >= 20) elContainer.removeChild(elContainer.firstChild);
   const d = document.createElement('div');
@@ -706,60 +580,7 @@ async function handleResult(text) {
   }
 }
 
-function updateLangIndicator() {
-  const halfBottom = document.querySelector('.half.bottom');
-  const halfTop = document.querySelector('.half.top');
-  const badgesBottom = document.querySelectorAll('.half.bottom .lang-badge');
-  const badgesTop = document.querySelectorAll('.half.top .lang-badge');
-
-  // 一旦すべてリセット
-  document.querySelectorAll('.lang-badge').forEach(el => { el.classList.remove('active', 'locked'); });
-  halfBottom.classList.remove('dim');
-  halfTop.classList.remove('dim');
-
-  // ロック中はロックされた側だけ目立たせて、反対側は半分まるごと暗くする
-  if (lockedLang === 'ja-JP') {
-    badgesBottom.forEach(el => { el.classList.add('locked', 'active'); });
-    halfTop.classList.add('dim');
-  } else if (lockedLang === 'en-US') {
-    badgesTop.forEach(el => { el.classList.add('locked', 'active'); });
-    halfBottom.classList.add('dim');
-  } else if (running) {
-    // 未ロック・稼働中：現在の聞き取り言語を active 表示
-    const isJa = currentLang === 'ja-JP';
-    if (isJa) badgesBottom.forEach(el => el.classList.add('active'));
-    else badgesTop.forEach(el => el.classList.add('active'));
-  }
-
-  // STARTボタン表示
-  if (!running) {
-    startBtn.classList.remove('ja', 'en');
-    startBtn.textContent = lockedLang ? (lockedLang === 'ja-JP' ? 'START (JA🔒)' : 'START (EN🔒)') : 'START';
-  } else {
-    const showJa = lockedLang ? lockedLang === 'ja-JP' : currentLang === 'ja-JP';
-    startBtn.classList.toggle('ja', showJa);
-    startBtn.classList.toggle('en', !showJa);
-    const lock = lockedLang ? ' 🔒' : '';
-    startBtn.textContent = (showJa ? '🎤 JA' : '🎤 EN') + lock;
-  }
-
-  // 会議モードヘッダー
-  let title;
-  if (!running) {
-    title = (lockedLang === 'ja-JP' ? '🔒 JA固定 ─ ' : lockedLang === 'en-US' ? '🔒 EN固定 ─ ' : '') + '会議モード — 全員の発言を字幕表示';
-  } else {
-    const showJa = lockedLang ? lockedLang === 'ja-JP' : currentLang === 'ja-JP';
-    title = (showJa ? '🎤 聞き取り中: 日本語' : '🎤 Listening: English') + (lockedLang ? ' 🔒固定' : '') + ' ─ 会議モード';
-  }
-  confHead.querySelector('.title').textContent = title;
-
-  // 会議モードのロックボタン
-  $('confLockJa').classList.toggle('active', lockedLang === 'ja-JP');
-  $('confLockEn').classList.toggle('active', lockedLang === 'en-US');
-}
-
 function setInterim(text, lang) {
-  // 対面モード
   if (lang === 'ja-JP') {
     interimJa.textContent = text; interimJa.classList.toggle('active', !!text);
     interimEn.textContent = ''; interimEn.classList.remove('active');
@@ -767,9 +588,6 @@ function setInterim(text, lang) {
     interimEn.textContent = text; interimEn.classList.toggle('active', !!text);
     interimJa.textContent = ''; interimJa.classList.remove('active');
   }
-  // 会議モード
-  confInterim.textContent = text ? `[${lang === 'ja-JP' ? 'JA' : 'EN'}] ${text}` : '';
-  confInterim.classList.toggle('active', !!text);
 }
 
 function startCycle() {
@@ -803,7 +621,7 @@ function startCycle() {
     } else if (e.error === 'network') {
       showError('ネット接続エラー（音声認識はオンライン必須）');
     } else if (e.error === 'no-speech') {
-      // 長時間無音は静かに次サイクル
+      // 静かに次サイクル
     } else if (e.error !== 'aborted') {
       showError('認識エラー: ' + e.error);
     }
@@ -811,11 +629,8 @@ function startCycle() {
   recognition.onend = () => {
     setInterim('', currentLang);
     if (finalText.trim()) handleResult(finalText);
-    if (lockedLang) {
-      currentLang = lockedLang; // ロック中は同じ言語のまま
-    } else {
-      currentLang = currentLang === 'ja-JP' ? 'en-US' : 'ja-JP';
-    }
+    if (lockedLang) currentLang = lockedLang;
+    else currentLang = currentLang === 'ja-JP' ? 'en-US' : 'ja-JP';
     if (running) setTimeout(startCycle, 30);
   };
 
@@ -828,7 +643,6 @@ function startAll() {
   running = true;
   currentLang = lockedLang || 'ja-JP';
   startBtn.classList.add('running');
-  confHead.classList.add('live');
   dstEn.classList.add('placeholder');
   dstJa.classList.add('placeholder');
   dstEn.textContent = 'listening...';
@@ -841,7 +655,6 @@ function stopAll() {
   setInterim('', 'ja-JP'); setInterim('', 'en-US');
   startBtn.classList.remove('running', 'ja', 'en');
   startBtn.textContent = 'START';
-  confHead.classList.remove('live');
   setMicState('idle');
   updateLangIndicator();
 }
