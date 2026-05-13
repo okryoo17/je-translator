@@ -112,9 +112,23 @@
     border-bottom: 1px solid #27272a;
     margin-bottom: 8px;
   }
-  .conf-header .title { font-size: 12px; opacity: 0.6; letter-spacing: 0.1em; }
-  .conf-header .dot { width: 8px; height: 8px; border-radius: 50%; background: #52525b; }
+  .conf-header .title { font-size: 12px; opacity: 0.6; letter-spacing: 0.1em; flex: 1; min-width: 0; }
+  .conf-header .dot { width: 8px; height: 8px; border-radius: 50%; background: #52525b; flex: 0 0 auto; }
   .conf-header.live .dot { background: #ef4444; animation: blink 1s infinite; }
+  .conf-lock-controls { display: flex; gap: 6px; flex: 0 0 auto; }
+  .conf-lock-controls button {
+    border: 1px solid #3f3f46; background: rgba(0,0,0,0.4);
+    color: #a1a1aa; padding: 5px 10px; border-radius: 6px;
+    font-size: 11px; font-family: inherit; font-weight: 600;
+    cursor: pointer;
+    -webkit-user-select: none; user-select: none;
+  }
+  .conf-lock-controls button:active { transform: scale(0.94); }
+  .conf-lock-controls button.active {
+    background: rgba(253,224,71,0.2);
+    border-color: #fde047;
+    color: #fef3c7;
+  }
 
   #confLog {
     flex: 1; overflow-y: auto; padding-bottom: 120px;
@@ -331,6 +345,10 @@
   <div class="conf-header" id="confHead">
     <div class="dot"></div>
     <div class="title">会議モード — 全員の発言を字幕表示</div>
+    <div class="conf-lock-controls">
+      <button id="confLockJa" type="button">JA 🔒</button>
+      <button id="confLockEn" type="button">EN 🔒</button>
+    </div>
   </div>
   <div id="confLog"></div>
   <div id="confInterim"></div>
@@ -612,6 +630,8 @@ document.querySelectorAll('.half.bottom .lang-badge').forEach(el =>
   el.addEventListener('click', (e) => { e.stopPropagation(); toggleLock('ja-JP'); }));
 document.querySelectorAll('.half.top .lang-badge').forEach(el =>
   el.addEventListener('click', (e) => { e.stopPropagation(); toggleLock('en-US'); }));
+$('confLockJa').addEventListener('click', (e) => { e.stopPropagation(); toggleLock('ja-JP'); });
+$('confLockEn').addEventListener('click', (e) => { e.stopPropagation(); toggleLock('en-US'); });
 
 if (!SR) { showError('このブラウザは音声認識に未対応'); startBtn.disabled = true; }
 
@@ -732,6 +752,10 @@ function updateLangIndicator() {
     title = (showJa ? '🎤 聞き取り中: 日本語' : '🎤 Listening: English') + (lockedLang ? ' 🔒固定' : '') + ' ─ 会議モード';
   }
   confHead.querySelector('.title').textContent = title;
+
+  // 会議モードのロックボタン
+  $('confLockJa').classList.toggle('active', lockedLang === 'ja-JP');
+  $('confLockEn').classList.toggle('active', lockedLang === 'en-US');
 }
 
 function setInterim(text, lang) {
