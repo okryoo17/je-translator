@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="通訳">
+<title>日英通訳</title>
+<link rel="apple-touch-icon" href="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='22' fill='%23111'/><text x='50' y='62' font-size='52' text-anchor='middle' fill='white'>JE</text></svg>">
+<style>
+  :root { color-scheme: dark; }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body {
+    margin: 0; padding: 0; height: 100%;
+    background: #0b0b0f; color: #f4f4f5;
+    font-family: -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Yu Gothic", sans-serif;
+    overscroll-behavior: none;
+  }
+  body {
+    display: flex; flex-direction: column;
+    padding: env(safe-area-inset-top) 16px env(safe-area-inset-bottom);
+    max-width: 640px; margin: 0 auto;
+  }
+  header {
+    padding: 14px 4px 6px; display: flex; align-items: center; justify-content: space-between;
+  }
+  header h1 { font-size: 16px; font-weight: 600; margin: 0; letter-spacing: 0.02em; }
+  header .sub { font-size: 11px; color: #8b8b94; }
+  #log {
+    flex: 1; overflow-y: auto; padding: 8px 2px 120px;
+    -webkit-overflow-scrolling: touch;
+  }
+  .bubble {
+    margin: 10px 0; padding: 12px 14px; border-radius: 14px;
+    line-height: 1.5; font-size: 16px; word-break: break-word;
+    animation: pop 0.18s ease-out;
+  }
+  @keyframes pop { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+  .src { background: #1c1c22; color: #d4d4d8; }
+  .dst { background: #1e3a8a; color: #fff; font-weight: 500; }
+  .tag { font-size: 10px; color: #71717a; margin-bottom: 4px; letter-spacing: 0.08em; }
+  .controls {
+    position: fixed; left: 0; right: 0; bottom: 0;
+    padding: 12px 16px calc(env(safe-area-inset-bottom) + 12px);
+    background: linear-gradient(to top, #0b0b0f 70%, transparent);
+    display: flex; gap: 10px;
+    max-width: 640px; margin: 0 auto;
+  }
+  button {
+    flex: 1; border: none; border-radius: 16px;
+    padding: 18px 12px;
+    font-size: 16px; font-weight: 600;
+    color: #fff; cursor: pointer;
+    transition: transform 0.08s, opacity 0.15s;
+    font-family: inherit;
+  }
+  button:active { transform: scale(0.97); }
+  #btnJa { background: #dc2626; }
+  #btnEn { background: #2563eb; }
+  button.listening { animation: pulse 1s infinite; }
+  @keyframes pulse {
+    0%, 100% { opacity: 1; box-shadow: 0 0 0 0 rgba(255,255,255,0.4); }
+    50% { opacity: 0.85; box-shadow: 0 0 0 12px rgba(255,255,255,0); }
+  }
+  button:disabled { opacity: 0.4; }
+  #empty {
+    color: #52525b; text-align: center; padding: 60px 20px; font-size: 14px; line-height: 1.7;
+  }
+  #empty b { color: #a1a1aa; }
+  .err { color: #f87171; font-size: 13px; text-align: center; padding: 8px; }
+  #clear {
+    position: absolute; right: 8px; top: 12px;
+    background: transparent; border: 1px solid #3f3f46; color: #a1a1aa;
+    padding: 4px 10px; font-size: 11px; border-radius: 8px; flex: none;
+  }
+</style>
+</head>
+<body>
+<header>
+  <div>
+    <h1>日英通訳</h1>
+    <div class="sub">話す言語のボタンを押して話す</div>
+  </div>
+  <button id="clear">クリア</button>
+</header>
+
+<div id="log">
+  <div id="empty">
+    <b>使い方</b><br>
+    赤ボタン＝日本語を話す → 英語に翻訳<br>
+    青ボタン＝英語を話す → 日本語に翻訳<br><br>
+    ボタンを押して話し終わったらもう一度押す<br>
+    （または1.5秒沈黙で自動停止）
+  </div>
+</div>
+
+<div class="controls">
+  <button id="btnJa">🇯🇵 日本語を話す</button>
+  <button id="btnEn">🇬🇧 Speak English</button>
+</div>
+
+<script>
+const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+const log = document.getElementById('log');
+const empty = document.getElementById('empty');
+const btnJa = document.getElementById('btnJa');
+const btnEn = document.getElementById('btnEn');
+const btnClear = document.getElementById('clear');
+
+let recognition = null;
+let currentMode = null;
+
+if (!SR) {
+  showError('このブラウザは音声認識に未対応です。iOSはSafariまたはChromeをお試しください。');
+  btnJa.disabled = true; btnEn.disabled = true;
+}
+
+function showError(msg) {
+  const div = document.createElement('div');
+  div.className = 'err';
+  div.textContent = msg;
+  log.appendChild(div);
+  log.scrollTop = log.scrollHeight;
+}
+
+function addBubble(text, kind, tag) {
+  if (empty.parentNode) empty.remove();
+  const t = document.createElement('div');
+  t.className = 'tag'; t.textContent = tag;
+  const b = document.createElement('div');
+  b.className = 'bubble ' + kind;
+  b.textContent = text;
+  log.appendChild(t); log.appendChild(b);
+  log.scrollTop = log.scrollHeight;
+  return b;
+}
+
+async function translate(text, from, to) {
+  const url = `https://api.mymemory.translated.net/get?q=${encodeURIComponent(text)}&langpair=${from}|${to}`;
+  const res = await fetch(url);
+  if (!res.ok) throw new Error('翻訳APIエラー');
+  const data = await res.json();
+  return data.responseData.translatedText;
+}
+
+function speak(text, lang) {
+  if (!window.speechSynthesis) return;
+  const u = new SpeechSynthesisUtterance(text);
+  u.lang = lang;
+  u.rate = 1.0;
+  window.speechSynthesis.cancel();
+  window.speechSynthesis.speak(u);
+}
+
+function startListening(mode) {
+  if (recognition) {
+    stopListening();
+    return;
+  }
+  currentMode = mode;
+  recognition = new SR();
+  recognition.lang = mode === 'ja' ? 'ja-JP' : 'en-US';
+  recognition.interimResults = false;
+  recognition.continuous = false;
+  recognition.maxAlternatives = 1;
+
+  const btn = mode === 'ja' ? btnJa : btnEn;
+  const otherBtn = mode === 'ja' ? btnEn : btnJa;
+  btn.classList.add('listening');
+  btn.textContent = mode === 'ja' ? '🎤 聞いてます...' : '🎤 Listening...';
+  otherBtn.disabled = true;
+
+  recognition.onresult = async (e) => {
+    const text = e.results[0][0].transcript.trim();
+    if (!text) return;
+    addBubble(text, 'src', mode === 'ja' ? '日本語' : 'English');
+    const placeholder = addBubble('翻訳中...', 'dst', mode === 'ja' ? 'English' : '日本語');
+    try {
+      const from = mode === 'ja' ? 'ja' : 'en';
+      const to = mode === 'ja' ? 'en' : 'ja';
+      const translated = await translate(text, from, to);
+      placeholder.textContent = translated;
+      speak(translated, mode === 'ja' ? 'en-US' : 'ja-JP');
+    } catch (err) {
+      placeholder.textContent = '翻訳失敗: ' + err.message;
+    }
+  };
+
+  recognition.onerror = (e) => {
+    if (e.error !== 'aborted' && e.error !== 'no-speech') {
+      showError('音声認識エラー: ' + e.error);
+    }
+  };
+
+  recognition.onend = () => {
+    stopListening();
+  };
+
+  try {
+    recognition.start();
+  } catch (err) {
+    showError('開始失敗: ' + err.message);
+    stopListening();
+  }
+}
+
+function stopListening() {
+  if (recognition) {
+    try { recognition.stop(); } catch(e) {}
+    recognition = null;
+  }
+  btnJa.classList.remove('listening');
+  btnEn.classList.remove('listening');
+  btnJa.disabled = false;
+  btnEn.disabled = false;
+  btnJa.textContent = '🇯🇵 日本語を話す';
+  btnEn.textContent = '🇬🇧 Speak English';
+  currentMode = null;
+}
+
+btnJa.addEventListener('click', () => {
+  if (currentMode === 'ja') stopListening();
+  else if (currentMode === 'en') { stopListening(); setTimeout(() => startListening('ja'), 100); }
+  else startListening('ja');
+});
+
+btnEn.addEventListener('click', () => {
+  if (currentMode === 'en') stopListening();
+  else if (currentMode === 'ja') { stopListening(); setTimeout(() => startListening('en'), 100); }
+  else startListening('en');
+});
+
+btnClear.addEventListener('click', () => {
+  log.innerHTML = '';
+  log.appendChild(empty);
+});
+</script>
+</body>
+</html>
