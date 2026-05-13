@@ -3,6 +3,9 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
 <meta name="apple-mobile-web-app-capable" content="no">
 <meta name="apple-mobile-web-app-title" content="通訳">
 <title>JP/EN 通訳</title>
@@ -589,6 +592,20 @@ function showError(msg) {
 function hasJapanese(text) {
   return /[぀-ゟ゠-ヿ一-鿿]/.test(text);
 }
+
+// 認識結果から実際の発話言語を推定
+// 'ja' = 確実に日本語 / 'en' = 確実に英語 / 'maybe-en' = カタカナ混じり（英語誤認識の可能性）/ 'unknown'
+function detectSpoken(text) {
+  const t = text.trim();
+  if (!t) return 'unknown';
+  // ひらがな or 漢字を含む → ほぼ確実に日本語
+  if (/[぀-ゟ一-鿿]/.test(t)) return 'ja';
+  // カタカナのみ短文 → en-USを喋った時のja-JP誤認識パターン
+  if (/^[゠-ヿー・、。\s]+$/.test(t) && t.replace(/[\s、。]/g,'').length < 25) return 'maybe-en';
+  // ASCII英字含む → 英語
+  if (/[a-zA-Z]/.test(t)) return 'en';
+  return 'unknown';
+}
 async function translate(text, from, to) {
   const url = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=${from}&tl=${to}&dt=t&q=${encodeURIComponent(text)}`;
   try {
@@ -611,11 +628,8 @@ function pushHistory(elContainer, text) {
   elContainer.scrollTop = elContainer.scrollHeight;
 }
 
-async function handleResult(text) {
-  text = text.trim();
-  if (!text) return;
-  const isJa = hasJapanese(text);
-  if (isJa) {
+async function processSpoken(text, spokenLang) {
+  if (spokenLang === 'ja') {
     if (!dstJa.classList.contains('placeholder') && dstJa.textContent) pushHistory(histJa, dstJa.textContent);
     dstJa.classList.remove('placeholder');
     dstJa.textContent = text;
@@ -687,8 +701,24 @@ function startCycle() {
   };
   recognition.onend = () => {
     setInterim('', currentLang);
-    if (finalText.trim()) handleResult(finalText);
-    currentLang = currentLang === 'ja-JP' ? 'en-US' : 'ja-JP';
+    const text = finalText.trim();
+    if (text) {
+      const spoken = detectSpoken(text);
+      if (spoken === 'ja') {
+        processSpoken(text, 'ja');
+        currentLang = 'ja-JP'; // 維持
+      } else if (spoken === 'en') {
+        processSpoken(text, 'en');
+        currentLang = 'en-US'; // 維持
+      } else if (spoken === 'maybe-en' && currentLang === 'ja-JP') {
+        // ja-JPモードで英語誤認識（カタカナ化）→ 結果を捨てて en-US へ
+        currentLang = 'en-US';
+      } else {
+        // 不明 → 反対言語で再試行
+        currentLang = currentLang === 'ja-JP' ? 'en-US' : 'ja-JP';
+      }
+    }
+    // text空（no-speech）の場合は currentLang そのままで再起動
     if (running) setTimeout(startCycle, 30);
   };
 
