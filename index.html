@@ -52,9 +52,16 @@
     margin-bottom: 6px;
   }
   .lang-badge {
-    font-size: 10px; letter-spacing: 0.18em; opacity: 0.55;
+    font-size: 10px; letter-spacing: 0.18em; opacity: 0.4;
     text-transform: uppercase; font-weight: 600;
+    transition: opacity 0.15s, color 0.15s;
   }
+  .lang-badge.active {
+    opacity: 1;
+    color: #fde047;
+    text-shadow: 0 0 8px rgba(253, 224, 71, 0.5);
+  }
+  .lang-badge.active::before { content: '🎤 '; }
   .role { font-size: 10px; opacity: 0.45; letter-spacing: 0.1em; }
   .history {
     flex: 0 0 auto; max-height: 28%; overflow-y: auto;
@@ -166,9 +173,11 @@
   }
   #startBtn:active { transform: scale(0.92); }
   #startBtn.running {
-    background: #dc2626; border-color: #fca5a5;
+    border-color: #fca5a5;
     animation: pulse 1.6s infinite;
   }
+  #startBtn.running.ja { background: #dc2626; }
+  #startBtn.running.en { background: #2563eb; border-color: #93c5fd; }
   @keyframes pulse {
     0%, 100% { box-shadow: 0 0 0 0 rgba(220,38,38,0.6); }
     50% { box-shadow: 0 0 0 14px rgba(220,38,38,0); }
@@ -653,6 +662,22 @@ async function handleResult(text) {
   }
 }
 
+function updateLangIndicator() {
+  if (!running) {
+    document.querySelectorAll('.lang-badge').forEach(el => el.classList.remove('active'));
+    startBtn.classList.remove('ja', 'en');
+    confHead.querySelector('.title').textContent = '会議モード — 全員の発言を字幕表示';
+    return;
+  }
+  const isJa = currentLang === 'ja-JP';
+  document.querySelectorAll('.half.bottom .lang-badge').forEach(el => el.classList.toggle('active', isJa));
+  document.querySelectorAll('.half.top .lang-badge').forEach(el => el.classList.toggle('active', !isJa));
+  startBtn.classList.toggle('ja', isJa);
+  startBtn.classList.toggle('en', !isJa);
+  startBtn.textContent = isJa ? '🎤 JA' : '🎤 EN';
+  confHead.querySelector('.title').textContent = isJa ? '🎤 聞き取り中: 日本語 ─ 会議モード' : '🎤 Listening: English ─ 会議モード';
+}
+
 function setInterim(text, lang) {
   // 対面モード
   if (lang === 'ja-JP') {
@@ -669,6 +694,7 @@ function setInterim(text, lang) {
 
 function startCycle() {
   if (!running) return;
+  updateLangIndicator();
   recognition = new SR();
   recognition.lang = currentLang;
   recognition.interimResults = true;
@@ -718,7 +744,6 @@ function startAll() {
   running = true;
   currentLang = 'ja-JP';
   startBtn.classList.add('running');
-  startBtn.textContent = 'STOP';
   confHead.classList.add('live');
   dstEn.classList.add('placeholder');
   dstJa.classList.add('placeholder');
@@ -730,10 +755,11 @@ function stopAll() {
   running = false;
   if (recognition) { try { recognition.stop(); } catch(e) {} recognition = null; }
   setInterim('', 'ja-JP'); setInterim('', 'en-US');
-  startBtn.classList.remove('running');
+  startBtn.classList.remove('running', 'ja', 'en');
   startBtn.textContent = 'START';
   confHead.classList.remove('live');
   setMicState('idle');
+  updateLangIndicator();
 }
 
 startBtn.addEventListener('click', () => { if (running) stopAll(); else startAll(); });
