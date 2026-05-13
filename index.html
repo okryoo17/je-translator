@@ -606,6 +606,32 @@ function detectSpoken(text) {
   if (/[a-zA-Z]/.test(t)) return 'en';
   return 'unknown';
 }
+
+// 翻訳する価値のない誤認識・相槌・ノイズを弾く
+const FILLER_JA = new Set([
+  'ああ','あー','あ','うん','うーん','うー','ううん','ええ','えー','えーと','えっと',
+  'はい','いえ','そう','そうそう','ねえ','ねー','んー','んん','うわ','おお','ほう',
+  'よし','まあ','まぁ','よ','ね','うむ','ふむ','ふん','ほー','へー','あれ'
+]);
+const FILLER_EN = new Set([
+  'yeah','yes','no','ok','okay','hmm','uh','um','huh','oh','ah','eh','mm','mhm',
+  'well','so','hey','hi','bye','wow','right','sure'
+]);
+
+function shouldSkip(text, lang) {
+  const t = text.trim().replace(/[、。．,.\s!?！？・]/g,'');
+  if (!t) return true;
+  // 短すぎる発話（誤認識の典型）
+  if (lang === 'ja' && t.length < 2) return true;
+  if (lang === 'en' && t.length < 3) return true;
+  // 相槌のみ
+  const lower = t.toLowerCase();
+  if (lang === 'ja' && FILLER_JA.has(lower)) return true;
+  if (lang === 'en' && FILLER_EN.has(lower)) return true;
+  // 同じ文字の連続のみ（あああ、wwwww、---- 等）
+  if (/^(.)\1+$/.test(t)) return true;
+  return false;
+}
 async function translate(text, from, to) {
   const url = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=${from}&tl=${to}&dt=t&q=${encodeURIComponent(text)}`;
   try {
@@ -705,10 +731,10 @@ function startCycle() {
     if (text) {
       const spoken = detectSpoken(text);
       if (spoken === 'ja') {
-        processSpoken(text, 'ja');
+        if (!shouldSkip(text, 'ja')) processSpoken(text, 'ja');
         currentLang = 'ja-JP'; // 維持
       } else if (spoken === 'en') {
-        processSpoken(text, 'en');
+        if (!shouldSkip(text, 'en')) processSpoken(text, 'en');
         currentLang = 'en-US'; // 維持
       } else if (spoken === 'maybe-en' && currentLang === 'ja-JP') {
         // ja-JPモードで英語誤認識（カタカナ化）→ 結果を捨てて en-US へ
